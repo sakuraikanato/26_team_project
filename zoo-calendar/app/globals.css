@@ -1,0 +1,568 @@
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, "Noto Sans JP", sans-serif;
+  color: #3c3c3c;
+  background: #d3d3d3;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* アプリ全体 */
+
+.app {
+  width: 100%;
+  max-width: 440px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding-bottom: 80px;
+  background: #fff;
+  position: relative;
+}
+
+.app-content {
+  padding: 14px 22px 100px;
+}
+
+/* 月の見出し */
+
+.month-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 42px;
+  margin-bottom: 8px;
+}
+
+.month-header h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.month-arrow {
+  width: 28px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  color: #444;
+  font-size: 27px;
+}
+
+/* カレンダー */
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-auto-rows: 46px;
+  text-align: center;
+}
+
+.weekday {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+  font-size: 12px;
+}
+
+.day,
+.day-empty {
+  min-width: 0;
+  position: relative;
+}
+
+.day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 7px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #333;
+  font-size: 14px;
+}
+
+.day.selected {
+  background: #ff965e;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 2px 3px #d9d9d9;
+}
+
+.sun-icon {
+  font-size: 18px;
+  line-height: 20px;
+}
+
+.event-dot {
+  position: absolute;
+  bottom: 5px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #333;
+}
+
+.selected-dot {
+  margin-top: 3px;
+  font-size: 6px;
+}
+
+/* イベント一覧 */
+
+.events-section {
+  margin-top: 10px;
+}
+
+.events-section h2 {
+  margin: 0 0 10px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.event-list {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.event-card {
+  display: flex;
+  align-items: center;
+  min-height: 61px;
+  padding: 9px 12px;
+  border-radius: 9px;
+  background: #56ad6c;
+  color: #fff;
+  box-shadow: 0 3px 5px #00000025;
+}
+
+.event-time {
+  flex: 0 0 63px;
+  padding-right: 8px;
+  border-right: 1px solid #ffffffa0;
+  font-size: 17px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.event-info {
+  min-width: 0;
+  padding-left: 13px;
+}
+
+.event-info h3 {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+.event-info p {
+  margin: 2px 0 0;
+  font-size: 11px;
+}
+
+.no-events {
+  padding: 12px 0;
+  color: #888;
+  font-size: 14px;
+}
+
+/* 選択した1日分の天気 */
+
+.weather {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  margin: 12px 0 18px;
+  padding: 16px;
+  border-radius: 14px;
+  background: #edf5ee;
+  color: #3c4b42;
+}
+
+.weather-icon {
+  flex: 0 0 60px;
+  font-size: 44px;
+  text-align: center;
+}
+
+.weather-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.weather-content h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+}
+
+.weather-details {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.weather-details strong {
+  color: #548064;
+  font-size: 22px;
+}
+
+.weather-details p {
+  margin: 4px 0;
+  font-size: 12px;
+}
+
+/* イベント登録ボタン */
+
+.add-button {
+  position: fixed;
+  right: max(calc((100vw - 440px) / 2 + 22px), 22px);
+  bottom: 106px;
+  z-index: 5;
+  padding: 13px 21px;
+  border: none;
+  border-radius: 28px;
+  background: #ff965e;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  box-shadow: 0 3px 5px #00000030;
+}
+
+/* イベント登録フォーム */
+
+.event-form {
+  position: fixed;
+  left: 50%;
+  bottom: 165px;
+  z-index: 10;
+  width: calc(100% - 36px);
+  max-width: 404px;
+  padding: 20px;
+  transform: translateX(-50%);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 4px 20px #00000025;
+}
+
+.event-form h2 {
+  margin: 0 0 14px;
+  font-size: 18px;
+}
+
+.event-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.event-form input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fff;
+  color: #333;
+}
+
+.form-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.form-buttons button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 7px;
+  background: #56ad6c;
+  color: #fff;
+}
+
+.form-buttons button:last-child {
+  background: #eee;
+  color: #444;
+}
+
+/* アルバム */
+
+.album-section h1 {
+  font-size: 20px;
+}
+
+.album-section p {
+  color: #888;
+  font-size: 14px;
+}
+
+/* 下部メニュー */
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  z-index: 6;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 100%;
+  max-width: 440px;
+  height: 72px;
+  transform: translateX(-50%);
+  background: #fafafa;
+  box-shadow: 0 -2px 5px #00000012;
+}
+
+.bottom-nav button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border: none;
+  background: #fafafa;
+  color: #666;
+  font-size: 12px;
+}
+
+.bottom-nav button.active {
+  background: #56ad6c;
+  color: #fff;
+}
+
+.nav-icon {
+  font-size: 25px;
+  line-height: 27px;
+}
+
+/* スマートフォンの小さい画面 */
+
+@media (max-width: 380px) {
+  .weather {
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .weather-icon {
+    flex-basis: 44px;
+    font-size: 36px;
+  }
+
+  .weather-details {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}
+
+/* パソコン画面 */
+
+@media (min-width: 600px) {
+  .app {
+    margin-top: 20px;
+    min-height: calc(100dvh - 20px);
+  }
+}
+
+
+.weather {
+  margin: 12px 0 16px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.weather-summary {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  color: #888;
+  font-size: 13px;
+}
+
+.weather-summary-icon {
+  font-size: 18px;
+}
+
+
+/* =========================
+   イベント投稿画面
+========================= */
+
+.post-page {
+  background: #fff;
+  min-height: calc(100vh - 100px);
+  width: 100%;
+}
+
+.post-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  background: #55ad70;
+  color: #fff;
+  padding: 16px 18px;
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 16px;
+}
+
+.back-button {
+  border: none;
+  background: transparent;
+  color: #fff;
+  font-size: 32px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+.post-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 20px 30px;
+}
+
+.post-form label {
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+  margin-top: 5px;
+}
+
+.post-form input,
+.tag-select {
+  width: 100%;
+  height: 50px;
+  padding: 0 14px;
+  border: 1px solid #ccc;
+  border-radius: 9px;
+  background: #fff;
+  font-size: 14px;
+  box-sizing: border-box;
+  color: #333;
+}
+
+.post-form input:focus,
+.tag-select:focus {
+  outline: none;
+  border-color: #55ad70;
+}
+
+/* 動物タグ追加 */
+.tag-input-row {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+
+.tag-input-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.tag-add-button {
+  width: 80px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 9px;
+  background: #f59a61;
+  color: #fff;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.tag-select {
+  margin-bottom: 5px;
+}
+
+/* 選択した動物タグ */
+.selected-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 5px 0 12px;
+}
+
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 13px;
+  background: #f5f5f5;
+  border-radius: 20px;
+  box-shadow: 0 2px 4px #ccc;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.tag-chip button {
+  border: none;
+  background: transparent;
+  font-size: 17px;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* 投稿ボタン */
+.post-submit {
+  width: 100%;
+  height: 50px;
+  margin-top: 5px;
+  border: 1px solid #995c35;
+  border-radius: 9px;
+  background: #f59a61;
+  color: #fff;
+  font-size: 17px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.post-submit:hover,
+.tag-add-button:hover {
+  opacity: 0.85;
+}
+
+/* カレンダーに表示する動物タグ */
+.event-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.event-tags span {
+  background: #f1f1f1;
+  border-radius: 12px;
+  padding: 3px 9px;
+  font-size: 11px;
+}
+
+
