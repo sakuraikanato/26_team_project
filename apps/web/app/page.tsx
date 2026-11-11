@@ -1,8 +1,10 @@
 import Link from "next/link";
+import KeeperReset from "@/components/KeeperReset";
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-white">
+      <KeeperReset />
       <div className="mx-auto flex min-h-screen w-full max-w-[375px] flex-col px-5 pt-28 pb-10">
 
         {/* 写真エリア */}
@@ -24,9 +26,11 @@ export default function Home() {
         </h1>
 
         {/* すぐにはじめる */}
-        <div className="flex h-11 w-full items-center justify-center rounded-md border border-orange-400 bg-orange-400 text-base font-bold text-white">
+        <Link
+          href="/album"
+          className="flex h-11 w-full items-center justify-center rounded-md border border-orange-400 bg-orange-400 text-base font-bold text-white">
           すぐにはじめる
-        </div>
+        </Link>
 
         {/* 区切り線 */}
         <div className="my-7 border-t-2 border-dashed border-green-400"></div>

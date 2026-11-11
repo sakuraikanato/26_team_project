@@ -4,35 +4,33 @@ export type Weather = "sunny" | "rainy" | "cloudy" | "snowy";
 export type SortKey = "newest" | "likes";
 
 export type Comment = {
-id: string;
-name: string;
-text: string;
+  id: string;
+  name: string;
+  text: string;
 };
 
 export type Photo = {
-id: string;
-title: string;
-animalName: string;
-species: string;
-mood: Mood;
-likes: number;
+  id: string;
+  title: string;
+  tags: string[]; // 動物のタグ。例：「たろう（ライオン）」
+  mood: Mood;
+  likes: number;
   imageUrl?: string; // 画像がなければ灰色の枠を表示
-createdAt: string;
-description: string;
+  createdAt: string;
+  description: string;
   shotDate: string; // 撮影日 "2026-10-28" の形
-weather: Weather;
-temperature: number;
+  weather?: Weather; // TODO: 天気APIから入れる。ないときは表示しない
+  temperature?: number;
   poster: string; // 投稿した飼育員の名前
-comments: Comment[];
+  comments: Comment[];
 };
 
 // ダミーデータ。あとでAPIに置き換える
 export const photos: Photo[] = [
-{
+  {
     id: "1",
     title: "この角がお気に入り",
-    animalName: "たろう",
-    species: "ライオン",
+    tags: ["たろう（ライオン）"],
     mood: "mattari",
     likes: 24,
     createdAt: "2026-10-28T10:00:00+09:00",
@@ -42,15 +40,14 @@ export const photos: Photo[] = [
     temperature: 22,
     poster: "山田 武",
     comments: [
-    { id: "c1", name: "ゆうき", text: "寝顔かわいい！！" },
-    { id: "c2", name: "はるな", text: "今日見に行きます" },
+      { id: "c1", name: "ゆうき", text: "寝顔かわいい！！" },
+      { id: "c2", name: "はるな", text: "今日見に行きます" },
     ],
-},
-{
+  },
+  {
     id: "2",
     title: "冠羽が今日もきまってます",
-    animalName: "ハナ",
-    species: "カンムリヅル",
+    tags: ["ハナ（カンムリヅル）"],
     mood: "kiri",
     likes: 31,
     createdAt: "2026-10-27T14:30:00+09:00",
@@ -60,12 +57,11 @@ export const photos: Photo[] = [
     temperature: 19,
     poster: "佐藤 花",
     comments: [{ id: "c3", name: "みなみ", text: "かっこいい！" }],
-},
-{
+  },
+  {
     id: "3",
     title: "朝ごはんのあと",
-    animalName: "コタ",
-    species: "レッサーパンダ",
+    tags: ["コタ（レッサーパンダ）"],
     mood: "mattari",
     likes: 12,
     createdAt: "2026-10-26T09:15:00+09:00",
@@ -75,22 +71,22 @@ export const photos: Photo[] = [
     temperature: 16,
     poster: "山田 武",
     comments: [],
-},
+  },
 ];
 
 // TODO: 天気担当のAPIにつなぐ。今は仮で晴れ
 export async function getCurrentWeather(): Promise<Weather> {
-return "sunny";
+  return "sunny";
 }
 
 // 晴れ → キリッ、雨 → まったり、それ以外は両方
 export function defaultMoodFor(weather: Weather): MoodFilter {
-if (weather === "sunny") return "kiri";
-if (weather === "rainy") return "mattari";
-return "both";
+  if (weather === "sunny") return "kiri";
+  if (weather === "rainy") return "mattari";
+  return "both";
 }
 
-// TODO: ログイン担当につなぐ。今は仮で「飼育員ではない」。確認したいときは true に
+// TODO: ログイン担当につなぐ。今は仮で「飼育員ではない」
 export async function isKeeper(): Promise<boolean> {
-return false;
+  return false;
 }

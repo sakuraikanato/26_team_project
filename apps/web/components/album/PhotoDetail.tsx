@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { type FormEvent, useState } from "react";
+import { useIsKeeper } from "@/lib/keeper";
 import type { Photo, Weather } from "@/lib/album";
 
 const WEATHER: Record<Weather, { icon: string; label: string }> = {
@@ -25,7 +26,8 @@ photo: Photo;
 };
 
 export default function PhotoDetail({ photo, canEdit }: Props) {
-const [liked, setLiked] = useState(false);
+const keeperUser = useIsKeeper();
+  const [liked, setLiked] = useState(false);
 const [comments, setComments] = useState(photo.comments);
 const [text, setText] = useState("");
 
@@ -131,7 +133,7 @@ return (
     </main>
 
       {/* 投稿の編集・削除（飼育員だけ。編集ページ /album/[id]/edit は未作成） */}
-    {canEdit && (
+    {(canEdit || keeperUser) && (
         <Link
         href={`/album/${photo.id}/edit`}
         className="fixed bottom-24 right-4 rounded-full bg-[#f5955a] px-5 py-3.5 text-[15px] font-bold text-white shadow-lg"
