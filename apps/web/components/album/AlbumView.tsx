@@ -32,25 +32,27 @@ export default function AlbumView({
   );
   const keeperUser = useIsKeeper();
   const [mood, setMood] = useState<MoodFilter>(defaultMood);
-  const [animal, setAnimal] = useState("all");
+  const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortKey>("newest");
 
-  const tagNames = useMemo(
-    () => Array.from(new Set(photos.flatMap((p) => p.tags))),
-    [photos]
-  );
 
   const visible = useMemo(
     () =>
       photos
         .filter((p) => mood === "both" || p.mood === mood)
-        .filter((p) => animal === "all" || p.tags.includes(animal))
+        .filter(
+          (p) =>
+            query.trim() === "" ||
+            p.tags.some((t) =>
+              t.toLowerCase().includes(query.trim().toLowerCase())
+            )
+        )
         .sort((a, b) =>
           sort === "likes"
             ? b.likes - a.likes
             : +new Date(b.createdAt) - +new Date(a.createdAt)
         ),
-    [photos, mood, animal, sort]
+    [photos, mood, query, sort]
   );
 
   return (
@@ -74,27 +76,14 @@ export default function AlbumView({
 
       {/* 絞り込み・並べ替え */}
       <div className="flex gap-2 px-4 py-3">
-        <div className="relative">
-          <select
-            value={animal}
-            onChange={(e) => setAnimal(e.target.value)}
-            aria-label="動物名で絞り込み"
-            className="h-[34px] appearance-none rounded-full border border-gray-300 bg-white pl-3.5 pr-8 text-[13px] text-gray-600"
-          >
-            <option value="all">動物名</option>
-            {tagNames.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-          </select>
-          <span
-            aria-hidden
-            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-gray-500"
-          >
-            ▼
-          </span>
-        </div>
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="動物名で検索"
+          aria-label="動物名で検索"
+          className="h-[34px] min-w-0 flex-1 rounded-full border border-gray-300 bg-white px-3.5 text-[13px] text-[#2b2b2b] outline-none placeholder:text-gray-400 focus:border-[#5aaa64]"
+        />
         {(
           [
             { key: "newest", label: "新着順" },

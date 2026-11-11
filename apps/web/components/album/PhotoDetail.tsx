@@ -32,7 +32,7 @@ const [comments, setComments] = useState(photo.comments);
 const [text, setText] = useState("");
 
 const likes = photo.likes + (liked ? 1 : 0);
-const weather = WEATHER[photo.weather];
+const weather = photo.weather ? WEATHER[photo.weather] : undefined;
 
   // TODO: 今は画面上だけに追加。あとでAPIに送る
 function submit(e: FormEvent) {
@@ -63,7 +63,7 @@ return (
           // eslint-disable-next-line @next/next/no-img-element
         <img
             src={photo.imageUrl}
-            alt={`${photo.animalName}（${photo.species}）`}
+            alt={photo.tags[0] ?? photo.title}
             className="aspect-[4/3] w-full object-cover"
         />
         ) : (
@@ -92,12 +92,17 @@ return (
 
         {/* 撮影日・天気・気温・投稿者 */}
         <p className="mt-3 text-xs text-gray-500">
-        <span aria-hidden>{weather.icon}</span> {formatDate(photo.shotDate)}・
-        {weather.label} {photo.temperature}℃・投稿：{photo.poster}
+          {weather && <span aria-hidden>{weather.icon} </span>}
+          {formatDate(photo.shotDate)}
+          {weather &&
+            `・${weather.label}${
+              photo.temperature != null ? ` ${photo.temperature}℃` : ""
+            }`}
+          ・投稿：{photo.poster}
         </p>
 
         {/* タグ */}
-        <div className="mt-3 flex gap-2">
+        <div className="mt-3 flex flex-wrap gap-2">
         <span
             className={`rounded-full px-3 py-1 text-xs font-bold text-white ${
             photo.mood === "mattari" ? "bg-[#5b9bf5]" : "bg-[#5aaa64]"
@@ -105,9 +110,14 @@ return (
         >
             {MOOD_LABEL[photo.mood]}
         </span>
-        <span className="rounded-full border border-gray-400 px-3 py-1 text-xs">
-            {photo.animalName}（{photo.species}）
-        </span>
+        {photo.tags.map((t) => (
+            <span
+              key={t}
+              className="rounded-full border border-gray-400 px-3 py-1 text-xs"
+            >
+              {t}
+            </span>
+          ))}
         </div>
 
         {/* イベントへのリンク（カレンダーは別担当。リンク先が決まったら合わせる） */}
