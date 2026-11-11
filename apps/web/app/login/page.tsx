@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
 
@@ -13,7 +15,8 @@ export default function LoginPage() {
       return;
     }
 
-    alert("ログインしました");
+    document.cookie = "role=keeper; path=/"; // 飼育員の印（デモ用）
+    router.push("/album");
   };
 
   return (
