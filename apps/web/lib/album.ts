@@ -16,6 +16,7 @@ export type Photo = {
   mood: Mood;
   likes: number;
   imageUrl?: string; // 画像がなければ灰色の枠を表示
+  isLiked?: boolean; // 自分がいいね済みか（APIの isLiked）。ないときは false 扱い
   createdAt: string;
   description: string;
   shotDate: string; // 撮影日 "2026-10-28" の形
@@ -33,6 +34,8 @@ export const photos: Photo[] = [
     tags: ["たろう（ライオン）"],
     mood: "mattari",
     likes: 24,
+    isLiked: true,
+    imageUrl: "/sample/lion.jpg",
     createdAt: "2026-10-28T10:00:00+09:00",
     description: "広い部屋なのにいつもここで寝ています。",
     shotDate: "2026-10-28",
@@ -50,6 +53,7 @@ export const photos: Photo[] = [
     tags: ["ハナ（カンムリヅル）"],
     mood: "kiri",
     likes: 31,
+    imageUrl: "/sample/crane.jpg",
     createdAt: "2026-10-27T14:30:00+09:00",
     description: "冠羽をふわっと広げて、今日もごきげんです。",
     shotDate: "2026-10-27",
@@ -79,11 +83,9 @@ export async function getCurrentWeather(): Promise<Weather> {
   return "sunny";
 }
 
-// 晴れ → キリッ、雨 → まったり、それ以外は両方
+// 晴れ → キリッ、それ以外（雨・曇り・雪）→ まったり
 export function defaultMoodFor(weather: Weather): MoodFilter {
-  if (weather === "sunny") return "kiri";
-  if (weather === "rainy") return "mattari";
-  return "both";
+  return weather === "sunny" ? "kiri" : "mattari";
 }
 
 // TODO: ログイン担当につなぐ。今は仮で「飼育員ではない」

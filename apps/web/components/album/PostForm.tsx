@@ -9,6 +9,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import MoodBackground from "@/components/MoodBackground";
 import { photos as seed, type Mood, type Photo } from "@/lib/album";
 import { useIsKeeper } from "@/lib/keeper";
 import { mergePhotos, removePost, savePost, useLocalPosts } from "@/lib/posts";
@@ -141,8 +142,11 @@ export default function PostForm({ photo }: { photo?: Photo }) {
   }
 
   return (
-    <div className="mx-auto min-h-screen w-full max-w-full bg-white pb-10 text-[#2b2b2b]">
-      <header className="flex h-14 items-center gap-3 bg-[#5aaa64] px-4 text-white">
+    <div className="relative mx-auto min-h-screen w-full max-w-full pb-10 text-[#2b2b2b]">
+      {/* 背景は選んでいるキリッ／まったりに合わせて変わる */}
+      <MoodBackground mood={mood} />
+
+      <header className="relative flex h-14 items-center gap-3 bg-[#5aaa64] px-4 text-white">
         <Link
           href={photo ? `/album/${photo.id}` : "/album"}
           aria-label="戻る"
@@ -155,7 +159,7 @@ export default function PostForm({ photo }: { photo?: Photo }) {
         </p>
       </header>
 
-      <form onSubmit={submit} className="px-5 pt-4">
+      <form onSubmit={submit} className="relative px-5 pt-4">
         {/* 写真のアップロード（動画は今は保存できません） */}
         <label
           className={`flex w-full cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border border-dashed border-gray-400 bg-[#ececec] ${
@@ -217,7 +221,7 @@ export default function PostForm({ photo }: { photo?: Photo }) {
           className={inputClass}
         />
 
-        <label className={labelClass}>オン・オフ</label>
+        <label className={labelClass}>キリッ・まったり</label>
         <div className="grid grid-cols-2 overflow-hidden rounded-md border border-[#333]">
           {MOODS.map((m) => (
             <button

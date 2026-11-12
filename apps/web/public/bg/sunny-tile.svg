@@ -1,0 +1,21 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Frame 234">
+<path id="Intersect" d="M59.3535 37.2168C72.2577 37.2169 82.7188 47.6778 82.7188 60.582C82.7186 73.4861 72.2576 83.9471 59.3535 83.9473C46.4493 83.9473 35.9884 73.4862 35.9883 60.582C35.9883 47.6777 46.4492 37.2168 59.3535 37.2168Z" fill="url(#paint0_linear_0_849)"/>
+<path id="Subtract" d="M87.6348 60.5C87.5907 44.9167 74.9452 32.2979 59.3516 32.2979C43.7306 32.2979 31.0674 44.9611 31.0674 60.582C31.0676 76.2028 43.7308 88.8662 59.3516 88.8662H31.0664V32.2979H87.6348V60.5ZM87.6348 88.8662H59.3516C74.9453 88.8662 87.5909 76.2466 87.6348 60.6631V88.8662Z" fill="url(#paint1_linear_0_849)"/>
+<path id="Subtract_2" d="M100 60L60 100L44.8916 84.8916C49.1233 87.4144 54.0681 88.8661 59.3525 88.8662C74.9734 88.8662 87.6375 76.2029 87.6377 60.582C87.6375 44.9612 74.9734 32.2979 59.3525 32.2979C52.1132 32.298 45.5097 35.0185 40.5068 39.4922L60 20L100 60ZM38.2686 41.7305C33.7918 46.734 31.0684 53.3399 31.0684 60.582C31.0684 65.8651 32.5185 70.8091 35.04 75.04L20 60L38.2686 41.7305Z" fill="url(#paint2_linear_0_849)"/>
+</g>
+<defs>
+<linearGradient id="paint0_linear_0_849" x1="59.3535" y1="37.2168" x2="59.3535" y2="83.9473" gradientUnits="userSpaceOnUse">
+<stop stop-color="#F8DCCB"/>
+<stop offset="1" stop-color="#F7B791"/>
+</linearGradient>
+<linearGradient id="paint1_linear_0_849" x1="59.3506" y1="32.2979" x2="59.3506" y2="88.8662" gradientUnits="userSpaceOnUse">
+<stop stop-color="#F8DCCB"/>
+<stop offset="1" stop-color="#F7B791"/>
+</linearGradient>
+<linearGradient id="paint2_linear_0_849" x1="60" y1="20" x2="60" y2="100" gradientUnits="userSpaceOnUse">
+<stop stop-color="#F8DCCB"/>
+<stop offset="1" stop-color="#F7B791"/>
+</linearGradient>
+</defs>
+</svg>

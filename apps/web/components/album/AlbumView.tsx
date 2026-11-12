@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useIsKeeper } from "@/lib/keeper";
+import MoodBackground from "@/components/MoodBackground";
 import { mergePhotos, useLocalPosts } from "@/lib/posts";
 import type { MoodFilter, Photo, SortKey } from "@/lib/album";
 
@@ -55,17 +56,32 @@ export default function AlbumView({
     [photos, mood, query, sort]
   );
 
+  // 端まで引っぱったときの「びよん」と伸びる動きを止める（このページにいる間だけ）
+  useEffect(() => {
+    const html = document.documentElement;
+    const prev = html.style.overscrollBehaviorY;
+    html.style.overscrollBehaviorY = "none";
+    return () => {
+      html.style.overscrollBehaviorY = prev;
+    };
+  }, []);
+
   return (
-    <div className="relative mx-auto min-h-screen w-full max-w-full bg-white pb-20 text-[#2b2b2b]">
-      {/* ヘッダー＋タブ */}
-      <header className="bg-[#5aaa64] px-4 pb-3.5 pt-10">
-        <div className="grid grid-cols-3 overflow-hidden rounded-lg border-2 border-[#4a9455]">
+    <div className="relative mx-auto min-h-screen w-full max-w-full pb-16 pt-[87px] text-[#333]">
+      <MoodBackground mood={mood} />
+
+      {/* ヘッダー＋タブ。画面に固定して動かないようにする（高さ87px。上の pt-[87px] と合わせる） */}
+      <header className="fixed left-1/2 top-0 z-20 h-[87px] w-full max-w-full -translate-x-1/2 border-b border-[#ccc] bg-[#59ae69] px-4 pb-2 pt-10">
+        <div className="flex overflow-hidden rounded-lg border border-[#5f5f5f] bg-[#488b55]">
           {TABS.map((t) => (
             <button
               key={t.value}
               onClick={() => setMood(t.value)}
-              className={`w-full py-3 text-[15px] font-bold text-white ${
-                mood === t.value ? "bg-[#f5955a]" : "bg-[#5aaa64]"
+              aria-pressed={mood === t.value}
+              className={`h-9 flex-1 rounded-[5px] text-[13px] font-bold text-white ${
+                mood === t.value
+                  ? "bg-[#f6985f] shadow-[inset_0_4px_4px_rgba(0,0,0,0.25)]"
+                  : "bg-[#59ae69] shadow-[inset_0_-1px_4px_rgba(0,0,0,0.25)]"
               }`}
             >
               {t.label}
@@ -75,14 +91,14 @@ export default function AlbumView({
       </header>
 
       {/* 絞り込み・並べ替え */}
-      <div className="flex gap-2 px-4 py-3">
+      <div className="relative flex gap-2 px-5 py-2">
         <input
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="動物名で検索"
+          placeholder="検索"
           aria-label="動物名で検索"
-          className="h-[34px] min-w-0 flex-1 rounded-full border border-gray-300 bg-white px-3.5 text-[13px] text-[#2b2b2b] outline-none placeholder:text-gray-400 focus:border-[#5aaa64]"
+          className="w-[137px] min-w-0 rounded-2xl border border-[#ccc] bg-white px-3 py-1.5 text-xs text-[#333] outline-none placeholder:text-[#333] focus:border-[#59ae69]"
         />
         {(
           [
@@ -93,10 +109,11 @@ export default function AlbumView({
           <button
             key={s.key}
             onClick={() => setSort(s.key)}
-            className={`h-[34px] rounded-full border px-3.5 text-[13px] ${
+            aria-pressed={sort === s.key}
+            className={`shrink-0 rounded-2xl border px-3 py-1.5 text-xs ${
               sort === s.key
-                ? "border-[#f5955a] bg-[#f5955a] font-bold text-white"
-                : "border-gray-300 bg-white text-gray-600"
+                ? "border-[#f6985f] bg-[#f6985f] font-bold text-white shadow-[inset_0_4px_4px_rgba(0,0,0,0.25)]"
+                : "border-[#ccc] bg-white text-[#333]"
             }`}
           >
             {s.label}
@@ -105,88 +122,106 @@ export default function AlbumView({
       </div>
 
       {/* 写真一覧 */}
-      <main className="flex flex-col gap-6 px-5 pb-6 pt-1">
+      <main className="relative flex flex-col gap-3.5 pb-5">
         {visible.length === 0 ? (
-          <p className="py-12 text-center text-gray-500">
+          <p className="py-12 text-center text-[#808080]">
             この条件の写真はまだありません
           </p>
         ) : (
           visible.map((p) => (
-            <Link
-              key={p.id}
-              href={`/album/${p.id}`}
-              className="block bg-white shadow-md"
-            >
-              {p.imageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={p.imageUrl}
-                  alt={p.tags[0] ?? p.title}
-                  className="aspect-[4/3] w-full object-cover"
-                />
-              ) : (
-                <div className="flex aspect-[4/3] w-full items-center justify-center bg-gray-200 text-5xl">
-                  🐾
-                </div>
-              )}
-              <div className="px-3 pb-3 pt-2.5">
-                <div className="flex items-center gap-2">
-                  <span className="text-[15px] font-bold">{p.title}</span>
-                  <span
-                    className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold text-white ${
-                      p.mood === "mattari" ? "bg-[#5b9bf5]" : "bg-[#5aaa64]"
-                    }`}
-                  >
-                    {MOOD_LABEL[p.mood]}
-                  </span>
-                </div>
-                <div className="mt-2 flex items-center justify-between gap-2">
-                  <div className="flex flex-wrap gap-1.5">
-                    {p.tags.map((t) => (
-                      <span
-                        key={t}
-                        className="rounded-full border-[1.5px] border-[#222] px-2.5 py-px text-xs"
-                      >
-                        {t}
-                      </span>
-                    ))}
+            <div key={p.id} className="px-5 py-2">
+              <Link
+                href={`/album/${p.id}`}
+                className="flex flex-col gap-1.5 bg-[#fafafa] drop-shadow-[0_3px_3.5px_rgba(0,0,0,0.25)]"
+              >
+                {p.imageUrl ? (
+                  // 縦長の写真もそのままの比率で表示する（Figmaの vertical）
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={p.imageUrl}
+                    alt={p.tags[0] ?? p.title}
+                    className="h-auto w-full"
+                  />
+                ) : (
+                  <div className="flex aspect-[4/3] w-full items-center justify-center bg-[#e5e5e5] text-5xl">
+                    🐾
                   </div>
-                  <span className="shrink-0 text-[13px] text-gray-500">
-                    <span className="text-[#ef5b5b]">♥</span> {p.likes}
-                  </span>
+                )}
+                <div className="flex flex-col gap-1.5 p-[5px]">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[13px] font-bold">{p.title}</span>
+                    <span
+                      className={`shrink-0 rounded-[10px] px-2 py-0.5 text-[11px] text-[#fafafa] ${
+                        p.mood === "mattari" ? "bg-[#5899fb]" : "bg-[#fb6058]"
+                      }`}
+                    >
+                      {MOOD_LABEL[p.mood]}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex min-w-0 flex-wrap gap-1.5">
+                      {p.tags.map((t) => (
+                        <span
+                          key={t}
+                          className="rounded-[10px] border border-black bg-[#fafafa] px-2 py-0.5 text-[11px] text-black"
+                        >
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                    <span className="flex shrink-0 items-center gap-1 text-xs text-[#808080]">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={
+                          p.isLiked
+                            ? "/icons/heart-filled.svg"
+                            : "/icons/heart-outline.svg"
+                        }
+                        alt={p.isLiked ? "いいね済み" : "いいね"}
+                        width={14}
+                        height={14}
+                      />
+                      {p.likes}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </Link>
+              </Link>
+            </div>
           ))
         )}
       </main>
 
       {/* 投稿ボタン（飼育員だけ） */}
       {(canPost || keeperUser) && (
-        <div className="pointer-events-none fixed bottom-20 left-1/2 flex w-full max-w-full -translate-x-1/2 justify-end px-4">
+        <div className="pointer-events-none fixed bottom-[90px] left-1/2 flex w-full max-w-full -translate-x-1/2 justify-end px-5">
           <Link
             href="/album/new"
-            className="pointer-events-auto rounded-full bg-[#f5955a] px-5 py-3.5 text-[15px] font-bold text-white shadow-lg"
+            className="pointer-events-auto flex h-[42px] items-center gap-1.5 rounded-3xl bg-[#f6985f] px-[18px] text-base font-bold text-white shadow-[0_4px_4px_rgba(0,0,0,0.25)]"
           >
-            ＋ 新しく投稿する
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/icons/plus.svg" alt="" width={18} height={18} />
+            新しく投稿をする
           </Link>
         </div>
       )}
 
       {/* 下部ナビ（カレンダーは別担当。リンク先が決まったら合わせる） */}
-      <nav className="fixed bottom-0 left-1/2 flex h-16 w-full max-w-full -translate-x-1/2 border-t border-gray-300 bg-white">
+      <nav className="fixed bottom-0 left-1/2 flex h-16 w-full max-w-full -translate-x-1/2 bg-white">
         <Link
           href="/album"
-          className="flex flex-1 flex-col items-center justify-center gap-0.5 bg-[#5aaa64] text-[11px] text-white"
+          aria-current="page"
+          className="flex flex-1 flex-col items-center justify-center gap-0.5 bg-[#59ae69] text-[10px] text-[#fafafa] shadow-[inset_0_3px_4px_rgba(0,0,0,0.25)]"
         >
-          <span aria-hidden>🖼</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/icons/tab-album.svg" alt="" width={22} height={22} />
           <span>アルバム</span>
         </Link>
         <Link
           href="/calendar"
-          className="flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px] text-gray-600"
+          className="flex flex-1 flex-col items-center justify-center gap-0.5 bg-[#fafafa] text-[10px] text-[#808080] shadow-[inset_0_-3px_4px_rgba(0,0,0,0.25)]"
         >
-          <span aria-hidden>📅</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/icons/tab-calendar.svg" alt="" width={22} height={22} />
           <span>カレンダー</span>
         </Link>
       </nav>

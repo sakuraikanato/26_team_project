@@ -146,7 +146,7 @@ export default function CalendarClient({
   }
 
   return (
-    <div className="relative mx-auto min-h-screen w-full max-w-[390px] bg-white pb-16 text-[#2b2b2b]">
+    <div className="relative mx-auto min-h-screen w-full max-w-[390px] pb-16 text-[#2b2b2b]">
 
       {showForm ? (
         /* イベント登録画面 */

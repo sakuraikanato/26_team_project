@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { type FormEvent, useState } from "react";
+import MoodBackground from "@/components/MoodBackground";
 import { useIsKeeper } from "@/lib/keeper";
 import type { Photo, Weather } from "@/lib/album";
 
@@ -44,133 +45,155 @@ function submit(e: FormEvent) {
 }
 
 return (
-    <div className="relative mx-auto min-h-screen w-full max-w-full bg-white pb-40 text-[#2b2b2b]">
+    <div className="relative mx-auto min-h-screen w-full max-w-full pb-40 text-[#333]">
+      {/* 背景は写真のキリッ／まったりに合わせる */}
+      <MoodBackground mood={photo.mood} />
+
       {/* ヘッダー */}
-    <header className="flex items-center gap-3 bg-[#5aaa64] px-4 py-4 text-white">
+      <header className="relative flex items-center gap-3 bg-[#59ae69] px-4 py-4 text-white">
         <Link
-        href="/album"
-        aria-label="アルバムに戻る"
-        className="text-3xl leading-none"
+          href="/album"
+          aria-label="アルバムに戻る"
+          className="text-3xl leading-none"
         >
-        ‹
+          ‹
         </Link>
         <p className="text-lg font-bold">{photo.title}</p>
-    </header>
+      </header>
 
-    <main className="px-5 pt-4">
+      <main className="relative flex flex-col items-start gap-3 px-5 pb-5 pt-4">
         {/* 写真 */}
         {photo.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-        <img
+          <img
             src={photo.imageUrl}
             alt={photo.tags[0] ?? photo.title}
             className="aspect-[4/3] w-full object-cover"
-        />
+          />
         ) : (
-        <div className="flex aspect-[4/3] w-full items-center justify-center bg-gray-200 text-6xl">
+          <div className="flex aspect-[4/3] w-full items-center justify-center bg-gray-200 text-6xl">
             🐾
-        </div>
+          </div>
         )}
 
-        {/* タイトル＋いいね */}
-        <div className="mt-4 flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">{photo.title}</h1>
-        <button
-            type="button"
-            onClick={() => setLiked(!liked)}
-            aria-pressed={liked}
-            className={`flex shrink-0 items-center gap-2 rounded-full border bg-white px-4 py-2 text-[15px] font-bold shadow-sm ${
-            liked ? "border-[#f5955a]" : "border-gray-300"
-            }`}
-        >
-            <span className="text-[#ef5b5b]">♥</span>
-            <span>いいね {likes}</span>
-        </button>
-        </div>
+        {/* タイトル・いいね・説明・撮影日のカード */}
+        <section className="flex w-full flex-col gap-3 rounded-[11px] bg-[#fafafa] p-2.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.25)]">
+          <div className="flex flex-col gap-[5px]">
+            <div className="flex items-center justify-between gap-3">
+              <h1 className="text-xl font-bold">{photo.title}</h1>
+              <button
+                type="button"
+                onClick={() => setLiked(!liked)}
+                aria-pressed={liked}
+                className={`flex shrink-0 items-center gap-1.5 rounded-[18px] border px-3.5 py-2 text-[13px] font-bold ${
+                  liked ? "border-[#f6985f]" : "border-[#ccc]"
+                }`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/icons/heart-filled.svg" alt="" width={18} height={18} />
+                <span>いいね {likes}</span>
+              </button>
+            </div>
+            <p className="text-xs text-black">{photo.description}</p>
+          </div>
 
-        <p className="mt-3 text-[13px]">{photo.description}</p>
-
-        {/* 撮影日・天気・気温・投稿者 */}
-        <p className="mt-3 text-xs text-gray-500">
-          {weather && <span aria-hidden>{weather.icon} </span>}
-          {formatDate(photo.shotDate)}
-          {weather &&
-            `・${weather.label}${
-              photo.temperature != null ? ` ${photo.temperature}℃` : ""
-            }`}
-          ・投稿：{photo.poster}
-        </p>
+          {/* 撮影日・天気・気温・投稿者 */}
+          <p className="flex items-center gap-1.5 text-xs text-[#808080]">
+            {weather &&
+              (photo.weather === "sunny" ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src="/icons/weather-sunny.svg" alt="" width={16} height={16} />
+              ) : (
+                <span aria-hidden>{weather.icon}</span>
+              ))}
+            <span>
+              {formatDate(photo.shotDate)}
+              {weather &&
+                `・${weather.label}${
+                  photo.temperature != null ? ` ${photo.temperature}℃` : ""
+                }`}
+              ・投稿：{photo.poster}
+            </span>
+          </p>
+        </section>
 
         {/* タグ */}
-        <div className="mt-3 flex flex-wrap gap-2">
-        <span
-            className={`rounded-full px-3 py-1 text-xs font-bold text-white ${
-            photo.mood === "mattari" ? "bg-[#5b9bf5]" : "bg-[#5aaa64]"
+        <div className="flex flex-wrap gap-1.5">
+          <span
+            className={`rounded-2xl px-3 py-1.5 text-xs font-bold text-white ${
+              photo.mood === "mattari" ? "bg-[#5899fb]" : "bg-[#fb6058]"
             }`}
-        >
+          >
             {MOOD_LABEL[photo.mood]}
-        </span>
-        {photo.tags.map((t) => (
+          </span>
+          {photo.tags.map((t) => (
             <span
               key={t}
-              className="rounded-full border border-gray-400 px-3 py-1 text-xs"
+              className="rounded-2xl border border-[#ccc] bg-white px-3 py-1.5 text-[11px] text-black"
             >
               {t}
             </span>
           ))}
         </div>
 
+        {/* コメントのカード */}
+        <section className="flex w-full flex-col gap-3 rounded-[11px] bg-[#fafafa] p-2.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.25)]">
+          <h2 className="text-sm font-bold">コメント（{comments.length}）</h2>
+          {comments.length > 0 && (
+            <ul className="flex flex-col divide-y divide-black">
+              {comments.map((c) => (
+                <li
+                  key={c.id}
+                  className="flex flex-col gap-0.5 py-3 first:pt-0 last:pb-0"
+                >
+                  <p className="text-xs font-bold">{c.name}</p>
+                  <p className="text-[13px]">{c.text}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
         {/* イベントへのリンク（カレンダーは別担当。リンク先が決まったら合わせる） */}
         <Link
-        href="/calendar"
-        className="mt-4 inline-block rounded-full bg-[#5aaa64] px-5 py-2 text-xl font-bold text-white"
+          href="/calendar"
+          className="rounded-[17px] bg-[#59ae69] px-2.5 py-[5px] text-xl font-bold text-[#fafafa] drop-shadow-[0_4px_2px_rgba(0,0,0,0.25)]"
         >
-        この子が出るイベントへ →
+          この子が出るイベントへ →
         </Link>
+      </main>
 
-        {/* コメント */}
-        <section className="mt-5">
-        <h2 className="text-[15px] font-bold">コメント（{comments.length}）</h2>
-        <ul className="mt-3 flex flex-col gap-3">
-            {comments.map((c) => (
-            <li key={c.id}>
-                <p className="text-[13px] font-bold">{c.name}</p>
-                <p className="text-sm">{c.text}</p>
-            </li>
-            ))}
-        </ul>
-        </section>
-    </main>
-
-      {/* 投稿の編集・削除（飼育員だけ。編集ページ /album/[id]/edit は未作成） */}
-    {(canEdit || keeperUser) && (
+      {/* 投稿の編集・削除（飼育員だけ） */}
+      {(canEdit || keeperUser) && (
         <Link
-        href={`/album/${photo.id}/edit`}
-        className="fixed bottom-24 right-4 rounded-full bg-[#f5955a] px-5 py-3.5 text-[15px] font-bold text-white shadow-lg"
+          href={`/album/${photo.id}/edit`}
+          className="fixed bottom-24 right-5 flex h-[42px] items-center gap-1.5 rounded-3xl bg-[#f6985f] px-[18px] text-base font-bold text-white shadow-[0_4px_4px_rgba(0,0,0,0.25)]"
         >
-        ✎ 投稿の編集・削除
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/icons/edit.svg" alt="" width={24} height={24} />
+          投稿の編集・削除
         </Link>
-    )}
+      )}
 
       {/* コメント入力 */}
-    <form
+      <form
         onSubmit={submit}
         className="fixed bottom-0 left-0 right-0 flex items-center gap-3 border-t border-gray-300 bg-white px-4 py-3"
-    >
+      >
         <input
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        placeholder="コメントを書く"
-        className="h-11 flex-1 rounded-full bg-gray-200 px-4 text-sm text-[#2b2b2b] outline-none placeholder:text-gray-500"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="コメントを書く"
+          className="h-11 flex-1 rounded-full bg-gray-200 px-4 text-sm text-[#2b2b2b] outline-none placeholder:text-gray-500"
         />
         <button
-        type="submit"
-        aria-label="コメントを送る"
-        className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#f5955a] text-xl text-white"
+          type="submit"
+          aria-label="コメントを送る"
+          className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#f5955a] text-xl text-white"
         >
-        ➤
+          ➤
         </button>
-    </form>
+      </form>
     </div>
-);
+  );
 }
