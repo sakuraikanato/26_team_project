@@ -1,11 +1,17 @@
 import Link from "next/link";
 import KeeperReset from "@/components/KeeperReset";
+import MoodBackground, { moodForWeather } from "@/components/MoodBackground";
+import { getCurrentWeather } from "@/lib/album";
 
-export default function Home() {
+export default async function Home() {
+  // 今日の天気で背景を変える（晴れ → キリッ、それ以外 → まったり）
+  const weather = await getCurrentWeather();
+
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen">
+      <MoodBackground mood={moodForWeather(weather)} />
       <KeeperReset />
-      <div className="mx-auto flex min-h-screen w-full max-w-[375px] flex-col px-5 pt-28 pb-10">
+      <div className="relative mx-auto flex min-h-screen w-full max-w-[375px] flex-col px-5 pt-28 pb-10">
 
         {/* 写真エリア */}
         <div className="mb-6 grid grid-cols-3 gap-2">

@@ -83,11 +83,9 @@ export async function getCurrentWeather(): Promise<Weather> {
   return "sunny";
 }
 
-// 晴れ → キリッ、雨 → まったり、それ以外は両方
+// 晴れ → キリッ、それ以外（雨・曇り・雪）→ まったり
 export function defaultMoodFor(weather: Weather): MoodFilter {
-  if (weather === "sunny") return "kiri";
-  if (weather === "rainy") return "mattari";
-  return "both";
+  return weather === "sunny" ? "kiri" : "mattari";
 }
 
 // TODO: ログイン担当につなぐ。今は仮で「飼育員ではない」
