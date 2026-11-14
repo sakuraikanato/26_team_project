@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useIsKeeper } from "@/lib/keeper";
 import MoodBackground from "@/components/MoodBackground";
+import NameDialog from "@/components/album/NameDialog";
+import { useGuestName } from "@/lib/guest";
 import { mergePhotos, useLocalPosts } from "@/lib/posts";
 import type { MoodFilter, Photo, SortKey } from "@/lib/album";
 
@@ -32,6 +34,7 @@ export default function AlbumView({
     [seedPhotos, localPosts]
   );
   const keeperUser = useIsKeeper();
+  const guestName = useGuestName();
   const [mood, setMood] = useState<MoodFilter>(defaultMood);
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortKey>("newest");
@@ -204,6 +207,9 @@ export default function AlbumView({
           </Link>
         </div>
       )}
+
+      {/* 初めて来た一般の人には、名前の入力を重ねて出す（飼育員はアカウントの名前を使う） */}
+      {!canPost && !keeperUser && guestName === "" && <NameDialog />}
 
       {/* 下部ナビ（カレンダーは別担当。リンク先が決まったら合わせる） */}
       <nav className="fixed bottom-0 left-1/2 flex h-16 w-full max-w-full -translate-x-1/2 bg-white">

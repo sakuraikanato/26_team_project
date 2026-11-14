@@ -1,94 +1,97 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+const fieldClass =
+  "h-12 w-full rounded-lg border border-[#ccc] bg-white px-3.5 text-sm text-black shadow-[inset_0_2px_4px_rgba(0,0,0,0.25)] outline-none placeholder:text-[#808080] focus:border-[#59ae69]";
+const buttonClass =
+  "flex h-12 w-full items-center justify-center rounded-lg border border-[#784c31] bg-[#f6985f] text-base font-bold text-[#fafafa] shadow-[inset_0_-4px_4px_rgba(0,0,0,0.25)]";
+
 export default function LoginPage() {
   const router = useRouter();
-  const [userName, setUserName] = useState("");
+  // POST /auth/login は email と password を送る
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = () => {
-    if (userName === "" || password === "") {
-      alert("飼育員名とパスワードを入力してください");
+  const handleLogin = (e: FormEvent) => {
+    e.preventDefault();
+    if (email === "" || password === "") {
+      alert("メールアドレスとパスワードを入力してください");
       return;
     }
 
-    document.cookie = "role=keeper; path=/"; // 飼育員の印（デモ用）
+    // TODO: POST /auth/login につなぐ。今はデモ用に飼育員の印を付けるだけ
+    document.cookie = "role=keeper; path=/";
     router.push("/album");
   };
 
   return (
-    <main className="min-h-screen bg-white">
-
+    <main className="flex min-h-screen flex-col bg-white text-[#333]">
       {/* ヘッダー */}
-      <header className="flex h-14 items-center bg-green-500 px-5">
-        <Link
-          href="/"
-          className="mr-3 text-2xl leading-none text-white"
-        >
-          ←
+      <header className="flex h-14 shrink-0 items-center gap-2 border-b border-[#ccc] bg-[#59ae69] px-4">
+        <Link href="/" aria-label="トップに戻る">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/icons/back.svg" alt="" width={22} height={22} />
         </Link>
-
-        <h1 className="text-lg font-bold text-white">
+        <h1 className="text-[17px] font-bold text-[#fafafa]">
           飼育員アカウントでログイン
         </h1>
       </header>
 
-      {/* ログインフォーム */}
-      <div className="mx-auto mt-32 w-[90%] max-w-[400px]">
+      <div className="flex flex-1 flex-col items-center justify-center gap-[37px] px-5 pb-[120px] pt-5">
+        {/* 一般の人向けの案内 */}
+        <div className="flex w-full flex-col gap-4">
+          <p className="text-center text-base text-black">
+            一般の方はログインできません。
+            <br />
+            戻って「すぐにはじめる」からご覧ください
+          </p>
+          <Link href="/" className={buttonClass}>
+            戻る
+          </Link>
+        </div>
 
-        <p className="mb-7 text-center text-sm leading-relaxed text-gray-700">
-          一般の方はログインできません。
-          <br />
-          戻って「すぐにはじめる」からご覧ください
-        </p>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/icons/dashed-line.svg"
+          alt=""
+          width={350}
+          height={2}
+          className="w-full"
+        />
 
-        <div className="flex flex-col">
-
-          {/* 飼育員名 */}
-          <label
-            htmlFor="userName"
-            className="mb-1.5 text-sm font-bold text-gray-700"
-          >
-            飼育員名
+        {/* ログインフォーム */}
+        <form onSubmit={handleLogin} className="flex w-full flex-col gap-[15px]">
+          <label className="flex flex-col gap-1.5">
+            <span className="text-[13px] font-bold">メールアドレス</span>
+            <input
+              type="email"
+              autoComplete="email"
+              placeholder="メールアドレスを入力"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className={fieldClass}
+            />
           </label>
 
-          <input
-            id="userName"
-            type="text"
-            placeholder="飼育員名を入力"
-            value={userName}
-            onChange={(e) => setUserName(e.target.value)}
-            className="mb-4 h-12 rounded-md border border-gray-300 px-3.5 text-sm outline-none focus:border-green-500"
-          />
-
-          {/* パスワード */}
-          <label
-            htmlFor="password"
-            className="mb-1.5 text-sm font-bold text-gray-700"
-          >
-            パスワード
+          <label className="flex flex-col gap-1.5">
+            <span className="text-[13px] font-bold">パスワード</span>
+            <input
+              type="password"
+              autoComplete="current-password"
+              placeholder="パスワードを入力"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={fieldClass}
+            />
           </label>
 
-          <input
-            id="password"
-            type="password"
-            placeholder="パスワードを入力"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="mb-4 h-12 rounded-md border border-gray-300 px-3.5 text-sm outline-none focus:border-green-500"
-          />
-
-          {/* ログインボタン */}
-          <button
-            onClick={handleLogin}
-            className="mt-1 h-12 rounded-md border border-orange-400 bg-orange-400 text-base font-bold text-white transition hover:bg-orange-500"
-          >
+          <button type="submit" className={buttonClass}>
             飼育員アカウントでログイン
           </button>
-        </div>
+        </form>
       </div>
     </main>
   );
