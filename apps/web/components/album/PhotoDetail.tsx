@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { type FormEvent, useState } from "react";
 import MoodBackground from "@/components/MoodBackground";
+import { useGuestName } from "@/lib/guest";
 import { useIsKeeper } from "@/lib/keeper";
 import type { Photo, Weather } from "@/lib/album";
 
@@ -28,19 +29,22 @@ photo: Photo;
 
 export default function PhotoDetail({ photo, canEdit }: Props) {
 const keeperUser = useIsKeeper();
-  const [liked, setLiked] = useState(false);
+  const guestName = useGuestName();
+  // POST /posts/:id/like は「いいね数を増やすだけ」なので、取り消しはできない
+  const [liked, setLiked] = useState(photo.isLiked ?? false);
 const [comments, setComments] = useState(photo.comments);
 const [text, setText] = useState("");
 
-const likes = photo.likes + (liked ? 1 : 0);
+const likes = photo.likes + (liked && !photo.isLiked ? 1 : 0);
 const weather = photo.weather ? WEATHER[photo.weather] : undefined;
 
-  // TODO: 今は画面上だけに追加。あとでAPIに送る
+  // TODO: 今は画面上だけに追加。あとで POST /posts/:id/comments に { name, content } を送る
+  // name は、初めてアルバムを開いたときに入れた名前（なければ「ゲスト」）
 function submit(e: FormEvent) {
     e.preventDefault();
     const t = text.trim();
     if (!t) return;
-    setComments([...comments, { id: String(Date.now()), name: "あなた", text: t }]);
+    setComments([...comments, { id: String(Date.now()), name: guestName || "ゲスト", text: t }]);
     setText("");
 }
 
@@ -50,15 +54,14 @@ return (
       <MoodBackground mood={photo.mood} />
 
       {/* ヘッダー */}
-      <header className="relative flex items-center gap-3 bg-[#59ae69] px-4 py-4 text-white">
-        <Link
-          href="/album"
-          aria-label="アルバムに戻る"
-          className="text-3xl leading-none"
-        >
-          ‹
+      <header className="relative flex h-14 items-center gap-2 border-b border-[#ccc] bg-[#59ae69] px-4">
+        <Link href="/album" aria-label="アルバムに戻る" className="shrink-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/icons/back.svg" alt="" width={22} height={22} />
         </Link>
-        <p className="text-lg font-bold">{photo.title}</p>
+        <p className="min-w-0 flex-1 truncate text-[17px] font-bold text-[#fafafa]">
+          {photo.title}
+        </p>
       </header>
 
       <main className="relative flex flex-col items-start gap-3 px-5 pb-5 pt-4">
@@ -83,14 +86,19 @@ return (
               <h1 className="text-xl font-bold">{photo.title}</h1>
               <button
                 type="button"
-                onClick={() => setLiked(!liked)}
+                onClick={() => setLiked(true)}
+                disabled={liked}
                 aria-pressed={liked}
-                className={`flex shrink-0 items-center gap-1.5 rounded-[18px] border px-3.5 py-2 text-[13px] font-bold ${
-                  liked ? "border-[#f6985f]" : "border-[#ccc]"
-                }`}
+                className="flex shrink-0 items-center gap-1.5 rounded-[18px] border border-[#ccc] px-3.5 py-2 text-[13px] font-bold"
               >
+                {/* いいね済みは塗りつぶし、まだなら線だけのハート */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/icons/heart-filled.svg" alt="" width={18} height={18} />
+                <img
+                  src={liked ? "/icons/heart-filled-18.svg" : "/icons/heart-outline.svg"}
+                  alt=""
+                  width={18}
+                  height={18}
+                />
                 <span>いいね {likes}</span>
               </button>
             </div>
@@ -178,20 +186,23 @@ return (
       {/* コメント入力 */}
       <form
         onSubmit={submit}
-        className="fixed bottom-0 left-0 right-0 flex items-center gap-3 border-t border-gray-300 bg-white px-4 py-3"
+        className="fixed bottom-0 left-0 right-0 z-20 flex h-[60px] items-center gap-2 border-t border-[#ccc] bg-white py-[7px] pl-4 pr-3"
       >
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="コメントを書く"
-          className="h-11 flex-1 rounded-full bg-gray-200 px-4 text-sm text-[#2b2b2b] outline-none placeholder:text-gray-500"
+          aria-label="コメント"
+          maxLength={500}
+          className="h-full min-w-0 flex-1 rounded-[20px] bg-[#ebebeb] px-3.5 text-[13px] text-[#333] outline-none placeholder:text-[#808080]"
         />
         <button
           type="submit"
           aria-label="コメントを送る"
-          className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#f5955a] text-xl text-white"
+          className="flex aspect-square h-full shrink-0 items-center justify-center rounded-[10px] bg-[#f6985f] shadow-[0_4px_4px_rgba(0,0,0,0.25)]"
         >
-          ➤
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/icons/send.svg" alt="" width={22} height={22} />
         </button>
       </form>
     </div>
