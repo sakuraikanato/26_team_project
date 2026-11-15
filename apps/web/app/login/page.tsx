@@ -17,6 +17,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
 
   const [sending, setSending] = useState(false);
+  // メールアドレスかパスワードが違ったとき、点線の下に赤文字で出す
+  const [loginError, setLoginError] = useState(false);
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
@@ -27,10 +29,15 @@ export default function LoginPage() {
 
     // better-auth の認証クライアントでログインする（セッションは HttpOnly の Cookie に入る）
     setSending(true);
+    setLoginError(false);
     const error = await login(email, password);
     setSending(false);
     if (error) {
-      alert("メールアドレスかパスワードが違います");
+      if (error.status === 401) {
+        setLoginError(true);
+      } else {
+        alert("ログインできませんでした。時間をおいてもう一度お試しください");
+      }
       return;
     }
     router.push("/album");
@@ -73,6 +80,12 @@ export default function LoginPage() {
 
         {/* ログインフォーム */}
         <form onSubmit={handleLogin} className="flex w-full flex-col gap-[15px]">
+          {loginError && (
+            <p className="text-center text-sm font-bold text-[#fb3c32]" role="alert">
+              メールアドレス又はパスワードが違います
+            </p>
+          )}
+
           <label className="flex flex-col gap-1.5">
             <span className="text-[13px] font-bold">メールアドレス</span>
             <input

@@ -52,10 +52,11 @@ export function useMe(): Me | null | undefined {
   );
 }
 
-// メールアドレスとパスワードでログインする。失敗したらエラーメッセージを返す
+// メールアドレスとパスワードでログインする。失敗したら better-auth のエラー（status と code）を返す
+// （メールアドレスかパスワードが違うときは 401 INVALID_EMAIL_OR_PASSWORD）
 export async function login(email: string, password: string) {
   const { error } = await authClient.signIn.email({ email, password });
-  if (error) return error.message ?? "ログインできませんでした";
+  if (error) return error;
   await refreshMe();
   return null;
 }
