@@ -12,6 +12,7 @@ export interface CalendarEvent {
   title: string;
   description?: string;
   location?: string;
+  tags?: string[]; // GET /events/:id と POST /events にある（一覧では返らない）
   startDate: string;
   endDate: string;
 }
