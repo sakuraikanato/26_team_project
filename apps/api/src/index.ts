@@ -2,6 +2,7 @@ import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { auth } from "../lib/auth.js"
 import { apiHandler } from './routes'
+import { MyError } from '../lib/myerror.js'
 
 const app = new Hono()
 
@@ -10,6 +11,17 @@ const app = new Hono()
 })
 .route('/api', apiHandler)
 .all("/api/auth/*", (c) => auth.handler(c.req.raw))
+
+.onError((err, c) => {
+  if (err instanceof MyError) {
+    return c.json(err.response)
+  }
+  console.log(err)
+  return c.json({
+    code: "INTERNAL_ERROR",
+    message: "予期せぬエラーが発生しました"
+  }, 500)
+})
 
 export default app;
 export const AppType = typeof app;
