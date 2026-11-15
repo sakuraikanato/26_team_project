@@ -1,18 +1,29 @@
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
-import { auth } from "../lib/auth.js"
-import { apiHandler } from './routes'
+import { cors } from 'hono/cors'
+import { auth, webOrigins } from "../lib/auth.js"
+import { apiHandler } from './routes/index.js'
 
 const app = new Hono()
 
+// フロント（別ポート）から Cookie つきで呼べるようにする
+.use('/api/*', cors({
+  origin: webOrigins,
+  credentials: true,
+  allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowHeaders: ['Content-Type'],
+}))
 .get('/', (c) => {
   return c.text('Hello Hono!')
 })
-.route('/api', apiHandler)
-.all("/api/auth/*", (c) => auth.handler(c.req.raw))
+// 自前のルート（/api/v1/auth/me など）。better-auth より先に登録する
+.route('/api/v1', apiHandler)
+// ログイン・ログアウトなど better-auth の処理
+.on(['GET', 'POST'], '/api/v1/auth/*', (c) => auth.handler(c.req.raw))
 
 export default app;
-export const AppType = typeof app;
+// フロントの Hono RPC クライアント（hc<AppType>）で使う型
+export type AppType = typeof app;
 
 serve({
   fetch: app.fetch,

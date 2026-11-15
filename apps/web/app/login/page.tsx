@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { login } from "@/lib/session";
 
 const fieldClass =
   "h-12 w-full rounded-lg border border-[#ccc] bg-white px-3.5 text-sm text-black shadow-[inset_0_2px_4px_rgba(0,0,0,0.25)] outline-none placeholder:text-[#808080] focus:border-[#59ae69]";
@@ -15,15 +16,23 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = (e: FormEvent) => {
+  const [sending, setSending] = useState(false);
+
+  const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
     if (email === "" || password === "") {
       alert("メールアドレスとパスワードを入力してください");
       return;
     }
 
-    // TODO: POST /auth/login につなぐ。今はデモ用に飼育員の印を付けるだけ
-    document.cookie = "role=keeper; path=/";
+    // better-auth の認証クライアントでログインする（セッションは HttpOnly の Cookie に入る）
+    setSending(true);
+    const error = await login(email, password);
+    setSending(false);
+    if (error) {
+      alert("メールアドレスかパスワードが違います");
+      return;
+    }
     router.push("/album");
   };
 
@@ -88,7 +97,7 @@ export default function LoginPage() {
             />
           </label>
 
-          <button type="submit" className={buttonClass}>
+          <button type="submit" disabled={sending} className={buttonClass}>
             飼育員アカウントでログイン
           </button>
         </form>
