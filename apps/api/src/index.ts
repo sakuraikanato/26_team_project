@@ -1,7 +1,7 @@
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
-import { auth } from '../lib/auth';
-import { apiHandler } from './routes';
+import { auth } from "../lib/auth.js"
+import { apiHandler } from './routes'
 
 const app = new Hono()
 
