@@ -5,14 +5,19 @@ import { useRouter } from "next/navigation";
 import {
   type ChangeEvent,
   type FormEvent,
-  useEffect,
   useMemo,
   useState,
 } from "react";
 import MoodBackground from "@/components/MoodBackground";
 import { photos as seed, type Mood, type Photo } from "@/lib/album";
 import { useIsKeeper } from "@/lib/keeper";
-import { mergePhotos, removePost, savePost, useLocalPosts } from "@/lib/posts";
+import {
+  mergePhotos,
+  removePost,
+  savePost,
+  useHydrated,
+  useLocalPosts,
+} from "@/lib/posts";
 
 const MOODS: { value: Mood; label: string }[] = [
   { value: "kiri", label: "キリッ" },
@@ -20,9 +25,16 @@ const MOODS: { value: Mood; label: string }[] = [
 ];
 
 const inputBase =
-  "h-12 rounded-lg border border-gray-300 bg-white px-4 text-[15px] text-[#2b2b2b] outline-none placeholder:text-gray-400 focus:border-[#5aaa64]";
+  "h-12 rounded-lg border border-[#ccc] bg-white px-3.5 text-sm text-black shadow-[inset_0_2px_4px_rgba(0,0,0,0.25)] outline-none placeholder:text-[#808080] focus:border-[#59ae69]";
 const inputClass = `${inputBase} w-full`;
-const labelClass = "mb-2 mt-5 block text-[15px] font-bold";
+const labelClass = "text-sm font-bold text-[#333]";
+const buttonBase =
+  "flex h-12 w-full items-center justify-center rounded-lg border border-[#784c31] text-base font-bold text-[#fafafa]";
+
+// POST /posts の制約
+const TITLE_MAX = 50;
+const DESCRIPTION_MAX = 1000;
+const TAG_COUNT_MAX = 10;
 
 function todayString() {
   const d = new Date();
@@ -67,11 +79,12 @@ export default function PostForm({ photo }: { photo?: Photo }) {
   const [tagInput, setTagInput] = useState("");
   const [shotDate, setShotDate] = useState(photo?.shotDate ?? "");
   const [imageUrl, setImageUrl] = useState(photo?.imageUrl);
+  const [imageError, setImageError] = useState(false);
 
-  // 新規投稿の撮影日は、開いた日を最初に入れておく
-  useEffect(() => {
-    if (!photo) setShotDate((prev) => prev || todayString());
-  }, [photo]);
+  // 撮影日が空なら、今日の日付を出しておく（ブラウザで開いたあとに入る。
+  // サーバーとブラウザで日付がずれないように、表示のときだけ決める）
+  const hydrated = useHydrated();
+  const shotDateValue = shotDate || (hydrated ? todayString() : "");
 
   // 過去に使ったタグ（まだ選んでいないもの）
   const pastTags = useMemo(
@@ -84,7 +97,7 @@ export default function PostForm({ photo }: { photo?: Photo }) {
 
   function addTag(text: string) {
     const t = text.trim();
-    if (!t || tags.includes(t)) return;
+    if (!t || tags.includes(t) || tags.length >= TAG_COUNT_MAX) return;
     setTags([...tags, t]);
   }
 
@@ -93,6 +106,7 @@ export default function PostForm({ photo }: { photo?: Photo }) {
     if (!file) return;
     try {
       setImageUrl(await fileToDataUrl(file));
+      setImageError(false);
     } catch {
       alert("画像を読み込めませんでした");
     }
@@ -101,6 +115,12 @@ export default function PostForm({ photo }: { photo?: Photo }) {
   function submit(e: FormEvent) {
     e.preventDefault();
     if (!title.trim()) return;
+    // API では写真（image）は必須
+    if (!imageUrl) {
+      setImageError(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
     const post: Photo = {
       id: photo?.id ?? String(Date.now()),
       title: title.trim(),
@@ -119,12 +139,13 @@ export default function PostForm({ photo }: { photo?: Photo }) {
     if (savePost(post)) router.push(`/album/${post.id}`);
   }
 
+  // 「投稿を削除」→ 確認ダイアログ →「投稿を削除」で消す
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
   function remove() {
     if (!photo) return;
-    if (confirm("この投稿を削除しますか？")) {
-      removePost(photo);
-      router.push("/album");
-    }
+    removePost(photo);
+    router.push("/album");
   }
 
   if (!keeper) {
@@ -141,207 +162,253 @@ export default function PostForm({ photo }: { photo?: Photo }) {
     );
   }
 
+
   return (
-    <div className="relative mx-auto min-h-screen w-full max-w-full pb-10 text-[#2b2b2b]">
+    <div className="relative mx-auto min-h-screen w-full max-w-full text-[#333]">
       {/* 背景は選んでいるキリッ／まったりに合わせて変わる */}
       <MoodBackground mood={mood} />
 
-      <header className="relative flex h-14 items-center gap-3 bg-[#5aaa64] px-4 text-white">
+      <header className="relative flex h-14 items-center gap-2 border-b border-[#ccc] bg-[#59ae69] px-4">
         <Link
           href={photo ? `/album/${photo.id}` : "/album"}
           aria-label="戻る"
-          className="text-3xl leading-none"
+          className="shrink-0"
         >
-          ‹
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/icons/back.svg" alt="" width={22} height={22} />
         </Link>
-        <p className="text-lg font-bold">
-          {editing ? "投稿を編集する" : "新しく投稿をする"}
-        </p>
+        <h1 className="flex-1 text-base font-bold text-white">
+          {editing ? "投稿を編集・削除をする" : "新しく投稿をする"}
+        </h1>
       </header>
 
-      <form onSubmit={submit} className="relative px-5 pt-4">
-        {/* 写真のアップロード（動画は今は保存できません） */}
-        <label
-          className={`flex w-full cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border border-dashed border-gray-400 bg-[#ececec] ${
-            imageUrl ? "aspect-[4/3]" : "h-[180px]"
-          }`}
-        >
+      <form
+        onSubmit={submit}
+        className="relative flex flex-col gap-4 px-5 pb-5 pt-4"
+      >
+        {/* 写真のアップロード（動画は今は保存できません）。写真があればタップで選び直せる */}
+        <label className="block w-full cursor-pointer">
           {imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={imageUrl}
               alt="選んだ写真"
-              className="h-full w-full object-cover"
+              className="aspect-[4/3] w-full object-cover"
             />
           ) : (
-            <>
-              <svg
-                width="32"
-                height="32"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#666"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden
-              >
-                <path d="M12 15V4" />
-                <path d="M8 8l4-4 4 4" />
-                <path d="M4 14v5h16v-5" />
-              </svg>
-              <span className="mt-3 text-[15px] font-bold text-[#333]">
+            <span className="flex h-[180px] w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-[#999] bg-[#ebebeb]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/icons/upload.svg" alt="" width={32} height={32} />
+              <span className="text-sm font-bold text-[#333]">
                 写真・動画をアップロード
               </span>
-              <span className="mt-1 text-sm text-gray-500">タップして選択</span>
-            </>
+              <span className="text-xs text-[#808080]">タップして選択</span>
+            </span>
           )}
           <input
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp"
             onChange={onFile}
             className="hidden"
           />
         </label>
-
-        <label className={labelClass}>タイトル</label>
-        <input
-          required
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="タイトルを入力"
-          className={inputClass}
-        />
-
-        <label className={labelClass}>コメント（任意）</label>
-        <input
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="コメントを入力"
-          className={inputClass}
-        />
-
-        <label className={labelClass}>キリッ・まったり</label>
-        <div className="grid grid-cols-2 overflow-hidden rounded-md border border-[#333]">
-          {MOODS.map((m) => (
-            <button
-              key={m.value}
-              type="button"
-              onClick={() => setMood(m.value)}
-              className={`h-[37px] text-[15px] ${
-                mood === m.value
-                  ? "bg-[#f5955a] font-bold text-white"
-                  : "bg-white text-[#2b2b2b]"
-              }`}
-            >
-              {m.label}
-            </button>
-          ))}
-        </div>
-
-        <label className={labelClass}>動物のタグ付け</label>
-        <div className="flex gap-2">
-          <input
-            value={tagInput}
-            onChange={(e) => setTagInput(e.target.value)}
-            onKeyDown={(e) => {
-              // 日本語の変換を確定するEnterでは、追加しない
-              if (e.key === "Enter" && !e.nativeEvent.isComposing) {
-                e.preventDefault();
-                addTag(tagInput);
-                setTagInput("");
-              }
-            }}
-            placeholder="新しくタグを入力"
-            className={`${inputBase} min-w-0 flex-1`}
-          />
-          <button
-            type="button"
-            onClick={() => {
-              addTag(tagInput);
-              setTagInput("");
-            }}
-            className="h-12 shrink-0 rounded-lg bg-[#f5955a] px-6 text-[17px] font-bold text-white"
-          >
-            追加
-          </button>
-        </div>
-
-        <div className="relative mt-2">
-          <select
-            value=""
-            onChange={(e) => addTag(e.target.value)}
-            className={`${inputClass} appearance-none pr-10 text-gray-500`}
-          >
-            <option value="">過去に使ったタグから選択</option>
-            {pastTags.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#333"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2"
-            aria-hidden
-          >
-            <path d="M6 9l6 6 6-6" />
-          </svg>
-        </div>
-
-        {tags.length > 0 && (
-          <ul className="mt-3 flex flex-wrap gap-2">
-            {tags.map((t) => (
-              <li
-                key={t}
-                className="flex items-center gap-1.5 rounded-full bg-white px-3.5 py-1.5 text-sm font-bold shadow-md"
-              >
-                {t}
-                <button
-                  type="button"
-                  aria-label={`${t}を外す`}
-                  onClick={() => setTags(tags.filter((x) => x !== t))}
-                  className="text-base leading-none"
-                >
-                  ×
-                </button>
-              </li>
-            ))}
-          </ul>
+        {imageError && (
+          <p className="-mt-2 text-xs text-[#fb3c32]" role="alert">
+            写真を選んでください
+          </p>
         )}
 
-        <label className={labelClass}>撮影日（昔の写真は日付を変更）</label>
-        <input
-          type="date"
-          value={shotDate}
-          onChange={(e) => setShotDate(e.target.value)}
-          className={inputClass}
-        />
+        <label className="flex flex-col gap-1.5">
+          <span className={labelClass}>タイトル</span>
+          <input
+            required
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="タイトルを入力"
+            maxLength={TITLE_MAX}
+            className={inputClass}
+          />
+        </label>
+
+        <label className="flex flex-col gap-1.5">
+          <span className={labelClass}>コメント（任意）</span>
+          <input
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="コメントを入力"
+            maxLength={DESCRIPTION_MAX}
+            className={inputClass}
+          />
+        </label>
+
+        <div className="flex flex-col gap-4">
+          <span className={labelClass}>キリッ・まったり</span>
+          <div className="flex overflow-hidden rounded-lg border border-[#333]">
+            {MOODS.map((m) => (
+              <button
+                key={m.value}
+                type="button"
+                onClick={() => setMood(m.value)}
+                aria-pressed={mood === m.value}
+                className={`flex-1 py-2.5 text-[13px] ${
+                  mood === m.value
+                    ? "bg-[#f6985f] font-bold text-white shadow-[inset_0_4px_4px_rgba(0,0,0,0.25)]"
+                    : "bg-white text-[#333]"
+                }`}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 動物のタグ付け */}
+        <div className="flex flex-col gap-1.5">
+          <span className={labelClass}>動物のタグ付け</span>
+          <div className="flex gap-1.5">
+            <input
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyDown={(e) => {
+                // 日本語の変換を確定するEnterでは、追加しない
+                if (e.key === "Enter" && !e.nativeEvent.isComposing) {
+                  e.preventDefault();
+                  addTag(tagInput);
+                  setTagInput("");
+                }
+              }}
+              placeholder="新しくタグを入力"
+              aria-label="新しいタグ"
+              className={`${inputBase} min-w-0 flex-1`}
+            />
+            <button
+              type="button"
+              onClick={() => {
+                addTag(tagInput);
+                setTagInput("");
+              }}
+              className="h-12 w-[73px] shrink-0 rounded-lg bg-[#f6985f] text-base font-bold text-white shadow-[inset_0_-4px_4px_rgba(0,0,0,0.25)]"
+            >
+              追加
+            </button>
+          </div>
+
+          <div className="relative">
+            <select
+              value=""
+              onChange={(e) => addTag(e.target.value)}
+              aria-label="過去に使ったタグから選択"
+              className="h-12 w-full appearance-none rounded-lg border border-[#ccc] bg-white px-3.5 pr-10 text-sm text-[#808080] shadow-[inset_0_-2px_4px_rgba(0,0,0,0.25)] outline-none focus:border-[#59ae69]"
+            >
+              <option value="">過去に使ったタグから選択</option>
+              {pastTags.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/icons/chevron-down.svg"
+              alt=""
+              width={18}
+              height={18}
+              className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2"
+            />
+          </div>
+
+          {tags.length > 0 && (
+            <ul className="flex flex-wrap gap-2 py-2">
+              {tags.map((t) => (
+                <li
+                  key={t}
+                  className="flex items-center gap-1 rounded-2xl bg-[#fafafa] px-3 py-1.5 text-xs font-bold text-black shadow-[0_4px_4px_rgba(0,0,0,0.25)]"
+                >
+                  {t}
+                  <button
+                    type="button"
+                    aria-label={`${t}を外す`}
+                    onClick={() => setTags(tags.filter((x) => x !== t))}
+                  >
+                    ×
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <label className="flex flex-col gap-1.5">
+          <span className="text-[13px] font-bold text-[#333]">
+            撮影日（昔の写真は日付を変更）
+          </span>
+          <input
+            type="date"
+            value={shotDateValue}
+            onChange={(e) => setShotDate(e.target.value)}
+            className={inputClass}
+          />
+        </label>
 
         <button
           type="submit"
-          className="mt-6 h-[52px] w-full rounded-lg bg-[#f5955a] text-lg font-bold text-white"
+          className={`${buttonBase} bg-[#f6985f] shadow-[inset_0_-4px_4px_rgba(0,0,0,0.25)]`}
         >
-          {editing ? "保存" : "投稿"}
+          {editing ? "編集を保存" : "投稿"}
         </button>
 
         {editing && (
           <button
             type="button"
-            onClick={remove}
-            className="mt-3 h-[52px] w-full rounded-lg border border-[#ef5b5b] bg-white text-base font-bold text-[#ef5b5b]"
+            onClick={() => setConfirmDelete(true)}
+            className={`${buttonBase} bg-[#fb3c32]`}
           >
-            この投稿を削除する
+            投稿を削除
           </button>
         )}
       </form>
+
+      {/* 削除の確認ダイアログ */}
+      {confirmDelete && (
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4"
+          onClick={() => setConfirmDelete(false)}
+        >
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="delete-title"
+            onClick={(e) => e.stopPropagation()}
+            className="flex w-full max-w-[327px] flex-col items-center gap-7 bg-white px-4 py-[58px]"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/icons/warning.svg" alt="" width={44} height={44} />
+            <p
+              id="delete-title"
+              className="text-center text-2xl font-bold text-[#333]"
+            >
+              この投稿を削除しますか？
+            </p>
+            <div className="flex gap-7">
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(false)}
+                autoFocus
+                className="flex h-12 w-[105px] items-center justify-center rounded-lg border-2 border-[#59ae69] text-base text-black"
+              >
+                編集へ戻る
+              </button>
+              <button
+                type="button"
+                onClick={remove}
+                className="flex h-12 w-[105px] items-center justify-center rounded-lg border border-[#784c31] bg-[#fb3c32] text-base font-bold text-[#fafafa]"
+              >
+                投稿を削除
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
