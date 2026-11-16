@@ -14,9 +14,8 @@ const app = new Hono()
 
 .onError((err, c) => {
   if (err instanceof MyError) {
-    return c.json(err.response)
+    return c.json(err.response())
   }
-  console.log(err)
   return c.json({
     code: "INTERNAL_ERROR",
     message: "予期せぬエラーが発生しました"
