@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { login } from "@/lib/session";
 
 const fieldClass =
   "h-12 w-full rounded-lg border border-[#ccc] bg-white px-3.5 text-sm text-black shadow-[inset_0_2px_4px_rgba(0,0,0,0.25)] outline-none placeholder:text-[#808080] focus:border-[#59ae69]";
@@ -11,19 +12,34 @@ const buttonClass =
 
 export default function LoginPage() {
   const router = useRouter();
-  // POST /auth/login は email と password を送る
+  // better-auth の POST /api/v1/auth/sign-in/email に email と password を送る
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = (e: FormEvent) => {
+  const [sending, setSending] = useState(false);
+  // メールアドレスかパスワードが違ったとき、点線の下に赤文字で出す
+  const [loginError, setLoginError] = useState(false);
+
+  const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
     if (email === "" || password === "") {
       alert("メールアドレスとパスワードを入力してください");
       return;
     }
 
-    // TODO: POST /auth/login につなぐ。今はデモ用に飼育員の印を付けるだけ
-    document.cookie = "role=keeper; path=/";
+    // better-auth の認証クライアントでログインする（セッションは HttpOnly の Cookie に入る）
+    setSending(true);
+    setLoginError(false);
+    const error = await login(email, password);
+    setSending(false);
+    if (error) {
+      if (error.status === 401) {
+        setLoginError(true);
+      } else {
+        alert("ログインできませんでした。時間をおいてもう一度お試しください");
+      }
+      return;
+    }
     router.push("/album");
   };
 
@@ -64,6 +80,12 @@ export default function LoginPage() {
 
         {/* ログインフォーム */}
         <form onSubmit={handleLogin} className="flex w-full flex-col gap-[15px]">
+          {loginError && (
+            <p className="text-center text-sm font-bold text-[#fb3c32]" role="alert">
+              メールアドレス又はパスワードが違います
+            </p>
+          )}
+
           <label className="flex flex-col gap-1.5">
             <span className="text-[13px] font-bold">メールアドレス</span>
             <input
@@ -88,7 +110,7 @@ export default function LoginPage() {
             />
           </label>
 
-          <button type="submit" className={buttonClass}>
+          <button type="submit" disabled={sending} className={buttonClass}>
             飼育員アカウントでログイン
           </button>
         </form>

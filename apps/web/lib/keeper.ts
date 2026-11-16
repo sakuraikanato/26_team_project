@@ -1,15 +1,9 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useMe } from "./session";
 
-// ログインした飼育員の印（Cookie）。ログインページが「role=keeper」を書き込む前提
-function readKeeper() {
-  return document.cookie.split("; ").includes("role=keeper");
-}
-
-const subscribe = () => () => {};
-
-// サーバー側では常に false。ブラウザで開いたあとに、印を読んで切り替わる
+// 飼育員としてログインしているか。いまはログインできるのが飼育員だけなので「ログイン中 = 飼育員」
+// TODO: ユーザーに role（USER / KEEPER）が付いたら、user.role === "KEEPER" で判定する
 export function useIsKeeper() {
-  return useSyncExternalStore(subscribe, readKeeper, () => false);
+  return Boolean(useMe());
 }
