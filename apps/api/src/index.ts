@@ -4,6 +4,7 @@ import { cors } from 'hono/cors'
 import { auth, webOrigins } from "../lib/auth.js"
 import { apiHandler } from './routes/index.js'
 import { MyError } from '../lib/myerror.js'
+import { ApiError, handleError } from './lib/errors.js'
 
 const app = new Hono()
 
@@ -23,6 +24,9 @@ const app = new Hono()
 .on(['GET', 'POST'], '/api/v1/auth/*', (c) => auth.handler(c.req.raw))
 
 .onError((err, c) => {
+  if (err instanceof ApiError) {
+    return handleError(err, c)
+  }
   if (err instanceof MyError) {
     return c.json(err.response())
   }
