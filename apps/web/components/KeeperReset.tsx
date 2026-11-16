@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect } from "react";
+import { logout } from "@/lib/session";
 
-// トップページを開いたら、飼育員の印を消す（一般の人として入り直す）
+// トップページを開いたら、飼育員のログインを終える（一般の人として入り直す）
 export default function KeeperReset() {
   useEffect(() => {
-    document.cookie = "role=; path=/; max-age=0";
+    void logout();
   }, []);
   return null;
 }
