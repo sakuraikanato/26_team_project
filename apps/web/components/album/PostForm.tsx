@@ -10,7 +10,12 @@ import {
 import MoodBackground from "@/components/MoodBackground";
 import { type Mood, type Photo } from "@/lib/album";
 import { useIsKeeper } from "@/lib/keeper";
-import { createPost, deletePost, updatePost } from "@/lib/api-client";
+import {
+  createPost,
+  deletePost,
+  getCurrentWeather,
+  updatePost,
+} from "@/lib/api-client";
 
 const MOODS: { value: Mood; label: string }[] = [
   { value: "kiri", label: "キリッ" },
@@ -32,6 +37,18 @@ const TAG_COUNT_MAX = 10;
 function todayString() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+// 撮影日が今日なら、動物園の今の天気と気温を返す（API 設計書：weatherCode は
+// GET /weather/current の値を入れる）。昔の写真や、天気が取れなかったときは付けない
+async function weatherForShotDate(shotDate: string) {
+  if (shotDate !== todayString()) return {};
+  try {
+    const { weather } = await getCurrentWeather();
+    return { weatherCode: weather.code, temperature: weather.temperature };
+  } catch {
+    return {};
+  }
 }
 
 // 大きい写真は縮めて保存する（ブラウザの保存容量が小さいため）
@@ -127,6 +144,7 @@ export default function PostForm({ photo }: { photo?: Photo }) {
           takenAt: shotDateValue,
           image: imageFile,
           mood: apiMood,
+          ...(await weatherForShotDate(shotDateValue)),
         });
         router.push(`/album/${created.id}`);
       }
