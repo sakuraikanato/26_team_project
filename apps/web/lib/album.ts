@@ -1,3 +1,11 @@
+import {
+  getCurrentWeather as getCurrentWeatherApi,
+  getPost,
+  getPosts,
+  type ApiPostDetail,
+  type ApiPostSummary,
+} from "./api-client";
+
 export type Mood = "kiri" | "mattari";
 export type MoodFilter = Mood | "both";
 export type Weather = "sunny" | "rainy" | "cloudy" | "snowy";
@@ -78,9 +86,58 @@ export const photos: Photo[] = [
   },
 ];
 
-// TODO: 天気担当のAPIにつなぐ。今は仮で晴れ
+function toUiMood(mood: "kiritto" | "mattari"): Mood {
+  return mood === "kiritto" ? "kiri" : "mattari";
+}
+
+function toUiWeather(
+  icon: ApiPostDetail["weather"] extends infer T
+    ? T extends { icon: infer I }
+      ? I
+      : never
+    : never,
+): Weather {
+  if (icon === "sunny") return "sunny";
+  if (icon === "rain" || icon === "thunder") return "rainy";
+  if (icon === "snow") return "snowy";
+  return "cloudy";
+}
+
+export function toPhoto(
+  post: ApiPostSummary | ApiPostDetail,
+): Photo {
+  const detail = "description" in post;
+  return {
+    id: post.id,
+    title: post.title,
+    tags: post.tags,
+    mood: toUiMood(post.mood),
+    likes: post.likeCount,
+    isLiked: post.isLiked,
+    imageUrl: post.imageUrl ?? undefined,
+    createdAt: post.createdAt,
+    description: detail ? post.description : "",
+    shotDate: post.takenAt,
+    weather:
+      detail && post.weather ? toUiWeather(post.weather.icon) : undefined,
+    temperature: detail ? post.weather?.temperature : undefined,
+    poster: post.keeper?.username ?? "飼育員",
+    comments: [],
+  };
+}
+
+export async function getAlbumPhotos(): Promise<Photo[]> {
+  const result = await getPosts({ mood: "both", limit: 50 });
+  return result.items.map(toPhoto);
+}
+
+export async function getAlbumPhoto(id: string): Promise<Photo> {
+  return toPhoto(await getPost(id));
+}
+
 export async function getCurrentWeather(): Promise<Weather> {
-  return "sunny";
+  const { weather } = await getCurrentWeatherApi();
+  return toUiWeather(weather.icon);
 }
 
 // 晴れ → キリッ、それ以外（雨・曇り・雪）→ まったり

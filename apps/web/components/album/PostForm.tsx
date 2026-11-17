@@ -5,19 +5,12 @@ import { useRouter } from "next/navigation";
 import {
   type ChangeEvent,
   type FormEvent,
-  useMemo,
   useState,
 } from "react";
 import MoodBackground from "@/components/MoodBackground";
-import { photos as seed, type Mood, type Photo } from "@/lib/album";
+import { type Mood, type Photo } from "@/lib/album";
 import { useIsKeeper } from "@/lib/keeper";
-import {
-  mergePhotos,
-  removePost,
-  savePost,
-  useHydrated,
-  useLocalPosts,
-} from "@/lib/posts";
+import { createPost, deletePost, updatePost } from "@/lib/api-client";
 
 const MOODS: { value: Mood; label: string }[] = [
   { value: "kiri", label: "キリッ" },
@@ -69,7 +62,6 @@ function fileToDataUrl(file: File, maxSize = 1000): Promise<string> {
 export default function PostForm({ photo }: { photo?: Photo }) {
   const router = useRouter();
   const keeper = useIsKeeper();
-  const localPosts = useLocalPosts();
   const editing = Boolean(photo);
 
   const [title, setTitle] = useState(photo?.title ?? "");
@@ -79,21 +71,15 @@ export default function PostForm({ photo }: { photo?: Photo }) {
   const [tagInput, setTagInput] = useState("");
   const [shotDate, setShotDate] = useState(photo?.shotDate ?? "");
   const [imageUrl, setImageUrl] = useState(photo?.imageUrl);
+  const [imageFile, setImageFile] = useState<File>();
   const [imageError, setImageError] = useState(false);
 
   // 撮影日が空なら、今日の日付を出しておく（ブラウザで開いたあとに入る。
   // サーバーとブラウザで日付がずれないように、表示のときだけ決める）
-  const hydrated = useHydrated();
-  const shotDateValue = shotDate || (hydrated ? todayString() : "");
+  const shotDateValue = shotDate || todayString();
 
   // 過去に使ったタグ（まだ選んでいないもの）
-  const pastTags = useMemo(
-    () =>
-      Array.from(
-        new Set(mergePhotos(seed, localPosts).flatMap((p) => p.tags))
-      ).filter((t) => !tags.includes(t)),
-    [localPosts, tags]
-  );
+  const pastTags: string[] = [];
 
   function addTag(text: string) {
     const t = text.trim();
@@ -105,6 +91,7 @@ export default function PostForm({ photo }: { photo?: Photo }) {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
+      setImageFile(file);
       setImageUrl(await fileToDataUrl(file));
       setImageError(false);
     } catch {
@@ -112,40 +99,53 @@ export default function PostForm({ photo }: { photo?: Photo }) {
     }
   }
 
-  function submit(e: FormEvent) {
+  async function submit(e: FormEvent) {
     e.preventDefault();
     if (!title.trim()) return;
     // API では写真（image）は必須
-    if (!imageUrl) {
+    if (!editing && !imageFile) {
       setImageError(true);
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
-    const post: Photo = {
-      id: photo?.id ?? String(Date.now()),
-      title: title.trim(),
-      tags,
-      mood,
-      likes: photo?.likes ?? 0,
-      imageUrl,
-      createdAt: photo?.createdAt ?? new Date().toISOString(),
-      description: description.trim(),
-      shotDate: shotDate || todayString(),
-      weather: photo?.weather, // TODO: 天気APIから入れる
-      temperature: photo?.temperature,
-      poster: photo?.poster ?? "飼育員", // TODO: ログインした飼育員の名前
-      comments: photo?.comments ?? [],
-    };
-    if (savePost(post)) router.push(`/album/${post.id}`);
+    try {
+      const apiMood = mood === "kiri" ? "kiritto" : "mattari";
+      if (editing && photo) {
+        await updatePost(photo.id, {
+          title: title.trim(),
+          description: description.trim(),
+          tags,
+          takenAt: shotDateValue,
+          mood: apiMood,
+        });
+        router.push(`/album/${photo.id}`);
+      } else if (imageFile) {
+        const created = await createPost({
+          title: title.trim(),
+          description: description.trim(),
+          tags,
+          takenAt: shotDateValue,
+          image: imageFile,
+          mood: apiMood,
+        });
+        router.push(`/album/${created.id}`);
+      }
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "投稿に失敗しました");
+    }
   }
 
   // 「投稿を削除」→ 確認ダイアログ →「投稿を削除」で消す
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  function remove() {
+  async function remove() {
     if (!photo) return;
-    removePost(photo);
-    router.push("/album");
+    try {
+      await deletePost(photo.id);
+      router.push("/album");
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "投稿の削除に失敗しました");
+    }
   }
 
   if (!keeper) {

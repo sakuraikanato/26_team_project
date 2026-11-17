@@ -6,7 +6,6 @@ import { useIsKeeper } from "@/lib/keeper";
 import MoodBackground from "@/components/MoodBackground";
 import NameDialog from "@/components/album/NameDialog";
 import { useGuestName } from "@/lib/guest";
-import { mergePhotos, useLocalPosts } from "@/lib/posts";
 import type { MoodFilter, Photo, SortKey } from "@/lib/album";
 
 const TABS: { value: MoodFilter; label: string }[] = [
@@ -28,11 +27,7 @@ export default function AlbumView({
   defaultMood,
   canPost,
 }: Props) {
-  const localPosts = useLocalPosts();
-  const photos = useMemo(
-    () => mergePhotos(seedPhotos, localPosts),
-    [seedPhotos, localPosts]
-  );
+  const photos = seedPhotos;
   const keeperUser = useIsKeeper();
   const guestName = useGuestName();
   const [mood, setMood] = useState<MoodFilter>(defaultMood);

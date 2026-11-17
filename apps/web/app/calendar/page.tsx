@@ -4,8 +4,13 @@ import { getCurrentWeather } from "@/lib/album";
 import { getCalendarInitialData } from "@/lib/calendar";
 
 export default async function CalendarPage() {
+  const yearMonth = new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "2-digit",
+  }).format(new Date()).slice(0, 7);
   const { events, forecasts } =
-    await getCalendarInitialData("2026-10");
+    await getCalendarInitialData(yearMonth);
   // 今日の天気で背景を変える（晴れ → キリッ、それ以外 → まったり）
   const weather = await getCurrentWeather();
 
@@ -15,6 +20,7 @@ export default async function CalendarPage() {
       <CalendarClient
         initialEvents={events}
         initialForecasts={forecasts}
+        initialYearMonth={yearMonth}
       />
     </main>
   );

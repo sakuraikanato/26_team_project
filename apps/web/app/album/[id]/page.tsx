@@ -1,13 +1,13 @@
 import { Suspense } from "react";
 import { DetailLoader } from "@/components/album/PhotoLoaders";
-import { isKeeper, photos } from "@/lib/album";
+import { getAlbumPhoto } from "@/lib/album";
 
 type Params = Promise<{ id: string }>;
 
 async function Detail({ params }: { params: Params }) {
   const { id } = await params;
-  const keeper = await isKeeper();
-  return <DetailLoader id={id} seed={photos} canEdit={keeper} />;
+  const photo = await getAlbumPhoto(id);
+  return <DetailLoader photo={photo} canEdit={false} />;
 }
 
 export default function PhotoPage({ params }: { params: Params }) {

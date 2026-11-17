@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { calendar } from "../../lib/calendar";
-import { parse_date } from "@/lib/parse_date";
+import { parse_date } from "../../lib/parse_date.js";
 import { ApiError, type ErrorDetail } from "../lib/errors.js";
 import z from "zod";
 import { requireAuth } from "../middleware/auth";

@@ -22,7 +22,7 @@ export interface WeatherForecast {
   code: number;
   label: string;
   icon: WeatherIcon;
-  tempMax: number;
-  tempMin: number;
+  tempMax: number | null;
+  tempMin: number | null;
   precipitationProbability: number;
 }

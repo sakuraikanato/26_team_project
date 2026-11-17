@@ -10,7 +10,7 @@ export const user = sqliteTable("user", {
     .notNull(),
   image: text("image"),
   role: text("role", { enum: ["USER", "KEEPER"] })
-    .default("USER")
+    .default("KEEPER")
     .notNull(),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)

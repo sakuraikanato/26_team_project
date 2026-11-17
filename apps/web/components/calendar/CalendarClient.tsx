@@ -1,15 +1,20 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import type { CalendarEvent, WeatherForecast, WeatherIcon } from "@/lib/types";
 import { photos as albumSeed } from "@/lib/album";
+import {
+  createEvent,
+  getEvents,
+  getWeatherForecast,
+} from "@/lib/api-client";
 import { useIsKeeper } from "@/lib/keeper";
-import { mergePhotos, useLocalPosts } from "@/lib/posts";
 
 type Props = {
   initialEvents: CalendarEvent[];
   initialForecasts: WeatherForecast[];
+  initialYearMonth: string;
 };
 
 const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
@@ -103,13 +108,17 @@ const fieldClass =
 export default function CalendarClient({
   initialEvents,
   initialForecasts,
+  initialYearMonth,
 }: Props) {
   const keeper = useIsKeeper();
-  const localPosts = useLocalPosts();
 
-  const [currentMonth, setCurrentMonth] = useState(new Date(2026, 9, 1));
-  const [selectedDate, setSelectedDate] = useState("2026-10-31");
+  const [currentMonth, setCurrentMonth] = useState(() => {
+    const [year, month] = initialYearMonth.split("-").map(Number);
+    return new Date(year, month - 1, 1);
+  });
+  const [selectedDate, setSelectedDate] = useState(`${initialYearMonth}-01`);
   const [events, setEvents] = useState(initialEvents);
+  const [forecasts, setForecasts] = useState(initialForecasts);
   const [showForm, setShowForm] = useState(false);
 
   // イベント登録フォーム（POST /events の項目）
@@ -117,13 +126,27 @@ export default function CalendarClient({
   const [location, setLocation] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
-  const [eventDate, setEventDate] = useState("2026-10-31");
+  const [eventDate, setEventDate] = useState(`${initialYearMonth}-01`);
   const [startTime, setStartTime] = useState("11:00");
   const [endTime, setEndTime] = useState("12:00");
   const [formError, setFormError] = useState("");
 
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
+
+  useEffect(() => {
+    const yearMonth = `${year}-${String(month + 1).padStart(2, "0")}`;
+    Promise.all([getEvents(yearMonth), getWeatherForecast(14)])
+      .then(([eventResponse, forecastResponse]) => {
+        setEvents(eventResponse.events);
+        setForecasts(forecastResponse.forecasts);
+      })
+      .catch((error) => {
+        setFormError(
+          error instanceof Error ? error.message : "カレンダーを取得できませんでした",
+        );
+      });
+  }, [year, month]);
 
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDay = new Date(year, month, 1).getDay();
@@ -136,7 +159,7 @@ export default function CalendarClient({
       .sort((a, b) => a.startDate.localeCompare(b.startDate));
   }, [events, selectedDate]);
 
-  const selectedWeather = initialForecasts.find(
+  const selectedWeather = forecasts.find(
     (weather) => weather.date === selectedDate
   );
 
@@ -145,11 +168,11 @@ export default function CalendarClient({
     () =>
       Array.from(
         new Set([
-          ...mergePhotos(albumSeed, localPosts).flatMap((p) => p.tags),
+          ...albumSeed.flatMap((p) => p.tags),
           ...events.flatMap((e) => e.tags ?? []),
         ])
       ).filter((t) => !tags.includes(t)),
-    [localPosts, events, tags]
+    [events, tags]
   );
 
   function changeMonth(amount: number) {
@@ -181,7 +204,7 @@ export default function CalendarClient({
     setTags([...tags, t]);
   }
 
-  function registerEvent(e: FormEvent<HTMLFormElement>) {
+  async function registerEvent(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     if (!title.trim()) return;
@@ -195,26 +218,29 @@ export default function CalendarClient({
       return;
     }
 
-    // TODO: POST /events につなぐ（今は画面の中だけに追加）
-    const newEvent: CalendarEvent = {
-      id: `test-${Date.now()}`,
-      title: title.trim(),
-      location: location.trim() || undefined,
-      tags,
-      startDate: start.toISOString(),
-      endDate: end.toISOString(),
-    };
-
-    setEvents((previous) => [...previous, newEvent]);
-    setSelectedDate(eventDate);
-    setCurrentMonth(
-      new Date(
-        Number(eventDate.slice(0, 4)),
-        Number(eventDate.slice(5, 7)) - 1,
-        1
-      )
-    );
-    setShowForm(false);
+    try {
+      const newEvent = await createEvent({
+        title: title.trim(),
+        location: location.trim() || undefined,
+        tags,
+        startDate: start.toISOString(),
+        endDate: end.toISOString(),
+      });
+      setEvents((previous) => [...previous, newEvent]);
+      setSelectedDate(eventDate);
+      setCurrentMonth(
+        new Date(
+          Number(eventDate.slice(0, 4)),
+          Number(eventDate.slice(5, 7)) - 1,
+          1
+        )
+      );
+      setShowForm(false);
+    } catch (error) {
+      setFormError(
+        error instanceof Error ? error.message : "イベントの登録に失敗しました",
+      );
+    }
   }
 
   if (showForm) {
@@ -454,7 +480,7 @@ export default function CalendarClient({
               (day) => {
                 const date = formatDate(year, month, day);
                 const isSelected = date === selectedDate;
-                const weather = initialForecasts.find(
+                const weather = forecasts.find(
                   (item) => item.date === date
                 );
                 const hasEvent = events.some(
@@ -505,7 +531,9 @@ export default function CalendarClient({
               <WeatherMark icon={selectedWeather.icon} size={16} />
               <span>
                 天気予報：{selectedWeather.label}{" "}
-                {Math.round(selectedWeather.tempMax)}℃
+                {selectedWeather.tempMax == null
+                  ? ""
+                  : ` ${Math.round(selectedWeather.tempMax)}℃`}
               </span>
             </>
           ) : (

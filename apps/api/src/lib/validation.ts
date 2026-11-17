@@ -12,7 +12,7 @@ export function parsePositiveIntId(raw: string, resourceName = "ID"): number {
   return num;
 }
 
-export function parsePagination(c: Context, defaultLimit = 20, maxLimit = 100) {
+export function parsePagination(c: Context, defaultLimit = 20, maxLimit = 50) {
   const rawPage = c.req.query("page");
   const rawLimit = c.req.query("limit");
 

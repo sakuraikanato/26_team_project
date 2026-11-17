@@ -2,19 +2,20 @@ import AlbumView from "@/components/album/AlbumView";
 import {
     defaultMoodFor,
     getCurrentWeather,
-    isKeeper,
-    photos,
+    getAlbumPhotos,
 } from "@/lib/album";
 
 export default async function AlbumPage() {
-    const weather = await getCurrentWeather();
-    const keeper = await isKeeper();
+    const [weather, albumPhotos] = await Promise.all([
+        getCurrentWeather(),
+        getAlbumPhotos(),
+    ]);
 
 return (
     <AlbumView
-        photos={photos}
+        photos={albumPhotos}
         defaultMood={defaultMoodFor(weather)}
-        canPost={keeper}
+        canPost={false}
     />
 );
 }
