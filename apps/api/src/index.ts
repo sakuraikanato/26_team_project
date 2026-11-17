@@ -1,6 +1,7 @@
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
+import { csrf } from 'hono/csrf'
 import { auth, webOrigins } from "../lib/auth.js"
 import { apiHandler } from './routes/index.js'
 import { handleError } from './lib/errors.js'
@@ -14,6 +15,7 @@ const app = new Hono()
   allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type'],
 }))
+.use('/api/*', csrf({ origin: webOrigins }))
 .get('/', (c) => {
   return c.text('Hello Hono!')
 })

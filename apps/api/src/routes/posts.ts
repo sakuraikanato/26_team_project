@@ -17,7 +17,7 @@ import {
 } from "../lib/weather.js";
 import { requireKeeper, type KeeperEnv } from "../middleware/keeper.js";
 
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const MAX_BASE64_LENGTH = Math.ceil((MAX_IMAGE_BYTES * 4) / 3) + 256;
 
 function escapeLike(value: string): string {
@@ -120,7 +120,7 @@ async function resolveImageValue(raw: unknown): Promise<string | undefined> {
   if (typeof File !== "undefined" && raw instanceof File) {
     if (raw.size === 0) return undefined;
     if (raw.size > MAX_IMAGE_BYTES) {
-      throw new ApiError(413, "FILE_TOO_LARGE", "画像サイズは5MB以下にしてください");
+      throw new ApiError(413, "FILE_TOO_LARGE", "画像サイズは10MB以下にしてください");
     }
     if (raw.type && !raw.type.startsWith("image/")) {
       throw new ApiError(400, "INVALID_PARAMS", "入力内容に誤りがあります", [
@@ -136,7 +136,7 @@ async function resolveImageValue(raw: unknown): Promise<string | undefined> {
     const trimmed = raw.trim();
     if (!trimmed) return undefined;
     if (trimmed.length > MAX_BASE64_LENGTH) {
-      throw new ApiError(413, "FILE_TOO_LARGE", "画像サイズは5MB以下にしてください");
+      throw new ApiError(413, "FILE_TOO_LARGE", "画像サイズは10MB以下にしてください");
     }
     return trimmed;
   }
@@ -197,7 +197,7 @@ async function getPostDetailById(postId: number) {
 
 export const postRoutes = new Hono<KeeperEnv>()
   .get("/", async (c) => {
-    const { page, limit, offset } = parsePagination(c, 20, 100);
+    const { page, limit, offset } = parsePagination(c, 20, 50);
 
     const rawMood = c.req.query("mood") ?? "kiritto";
     let moodFilter: "kiritto" | "mattari" | "both";
@@ -537,7 +537,7 @@ export const postRoutes = new Hono<KeeperEnv>()
       throw new ApiError(404, "NOT_FOUND", "投稿が見つかりません");
     }
 
-    const { page, limit, offset } = parsePagination(c, 20, 100);
+    const { page, limit, offset } = parsePagination(c, 20, 50);
     const [{ total }] = await db
       .select({ total: count() })
       .from(comments)

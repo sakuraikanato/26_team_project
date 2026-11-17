@@ -19,6 +19,20 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
+  databaseHooks: {
+    user: {
+      create: {
+        async before(user) {
+          return {
+            data: {
+              ...user,
+              role: "KEEPER",
+            },
+          };
+        },
+      },
+    },
+  },
   trustedOrigins: webOrigins,
   advanced: {
     database: {

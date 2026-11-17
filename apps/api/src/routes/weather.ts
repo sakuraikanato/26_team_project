@@ -3,6 +3,10 @@ import { ApiError } from "../lib/errors.js";
 import { getWeatherFromCode } from "../lib/weather.js";
 
 const OPEN_METEO_ENDPOINT = "https://api.open-meteo.com/v1/forecast";
+const weatherCache = new Map<
+  string,
+  { expiresAt: number; data: Record<string, unknown> }
+>();
 
 function getZooCoordinates() {
   const lat = Number(process.env.ZOO_LATITUDE ?? "35.7165");
@@ -13,8 +17,15 @@ function getZooCoordinates() {
   };
 }
 
-async function fetchOpenMeteo(params: URLSearchParams): Promise<Record<string, unknown>> {
+async function fetchOpenMeteo(
+  params: URLSearchParams,
+  cacheTtlMs: number,
+): Promise<Record<string, unknown>> {
   const url = `${OPEN_METEO_ENDPOINT}?${params.toString()}`;
+  const cacheKey = params.toString();
+  const cached = weatherCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.data;
+
   let response: Response;
   try {
     response = await fetch(url, {
@@ -29,7 +40,12 @@ async function fetchOpenMeteo(params: URLSearchParams): Promise<Record<string, u
   }
 
   try {
-    return (await response.json()) as Record<string, unknown>;
+    const data = (await response.json()) as Record<string, unknown>;
+    weatherCache.set(cacheKey, {
+      data,
+      expiresAt: Date.now() + cacheTtlMs,
+    });
+    return data;
   } catch {
     throw new ApiError(502, "WEATHER_UNAVAILABLE", "天気情報の解析に失敗しました");
   }
@@ -45,7 +61,7 @@ export const weatherRoutes = new Hono()
       timezone: "Asia/Tokyo",
     });
 
-    const data = await fetchOpenMeteo(params);
+    const data = await fetchOpenMeteo(params, 10 * 60 * 1000);
     const current = data.current as
       | {
           time?: string;
@@ -107,7 +123,7 @@ export const weatherRoutes = new Hono()
       timezone: "Asia/Tokyo",
     });
 
-    const data = await fetchOpenMeteo(params);
+    const data = await fetchOpenMeteo(params, 60 * 60 * 1000);
     const daily = data.daily as
       | {
           time?: string[];

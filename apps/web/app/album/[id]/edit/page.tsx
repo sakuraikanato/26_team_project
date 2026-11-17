@@ -1,12 +1,13 @@
 import { Suspense } from "react";
 import { EditLoader } from "@/components/album/PhotoLoaders";
-import { photos } from "@/lib/album";
+import { getAlbumPhoto } from "@/lib/album";
 
 type Params = Promise<{ id: string }>;
 
 async function Edit({ params }: { params: Params }) {
   const { id } = await params;
-  return <EditLoader id={id} seed={photos} />;
+  const photo = await getAlbumPhoto(id);
+  return <EditLoader photo={photo} />;
 }
 
 export default function EditPage({ params }: { params: Params }) {

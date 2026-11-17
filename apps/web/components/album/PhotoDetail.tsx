@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import MoodBackground from "@/components/MoodBackground";
 import { useGuestName } from "@/lib/guest";
 import { useIsKeeper } from "@/lib/keeper";
+import { createComment, getComments, likePost } from "@/lib/api-client";
 import type { Photo, Weather } from "@/lib/album";
 
 const WEATHER: Record<Weather, { icon: string; label: string }> = {
@@ -32,20 +33,65 @@ const keeperUser = useIsKeeper();
   const guestName = useGuestName();
   // POST /posts/:id/like は「いいね数を増やすだけ」なので、取り消しはできない
   const [liked, setLiked] = useState(photo.isLiked ?? false);
+const [likeCount, setLikeCount] = useState(photo.likes);
 const [comments, setComments] = useState(photo.comments);
 const [text, setText] = useState("");
+const [commentError, setCommentError] = useState("");
+const [liking, setLiking] = useState(false);
 
-const likes = photo.likes + (liked && !photo.isLiked ? 1 : 0);
 const weather = photo.weather ? WEATHER[photo.weather] : undefined;
 
-  // TODO: 今は画面上だけに追加。あとで POST /posts/:id/comments に { name, content } を送る
-  // name は、初めてアルバムを開いたときに入れた名前（なければ「ゲスト」）
-function submit(e: FormEvent) {
+  useEffect(() => {
+    getComments(photo.id)
+      .then(({ items }) =>
+        setComments(
+          items.map((comment) => ({
+            id: comment.id,
+            name: comment.name,
+            text: comment.content,
+          })),
+        ),
+      )
+      .catch((error) => {
+        setCommentError(
+          error instanceof Error ? error.message : "コメントを取得できませんでした",
+        );
+      });
+  }, [photo.id]);
+
+async function submit(e: FormEvent) {
     e.preventDefault();
     const t = text.trim();
     if (!t) return;
-    setComments([...comments, { id: String(Date.now()), name: guestName || "ゲスト", text: t }]);
-    setText("");
+    try {
+      const comment = await createComment(photo.id, guestName || "ゲスト", t);
+      setComments([
+        ...comments,
+        { id: comment.id, name: comment.name, text: comment.content },
+      ]);
+      setText("");
+      setCommentError("");
+    } catch (error) {
+      setCommentError(
+        error instanceof Error ? error.message : "コメントを投稿できませんでした",
+      );
+    }
+}
+
+async function submitLike() {
+  if (liked || liking) return;
+  setLiking(true);
+  try {
+    const result = await likePost(photo.id);
+    setLikeCount(result.likeCount);
+    setLiked(true);
+  } catch (error) {
+    setCommentError(
+      error instanceof Error ? error.message : "いいねに失敗しました",
+    );
+  } finally {
+    setLiking(false);
+  }
 }
 
 return (
@@ -86,8 +132,8 @@ return (
               <h1 className="text-xl font-bold">{photo.title}</h1>
               <button
                 type="button"
-                onClick={() => setLiked(true)}
-                disabled={liked}
+                onClick={() => void submitLike()}
+                disabled={liked || liking}
                 aria-pressed={liked}
                 className="flex shrink-0 items-center gap-1.5 rounded-[18px] border border-[#ccc] px-3.5 py-2 text-[13px] font-bold"
               >
@@ -99,7 +145,7 @@ return (
                   width={18}
                   height={18}
                 />
-                <span>いいね {likes}</span>
+                <span>いいね {likeCount}</span>
               </button>
             </div>
             <p className="text-xs text-black">{photo.description}</p>
@@ -147,6 +193,11 @@ return (
         {/* コメントのカード */}
         <section className="flex w-full flex-col gap-3 rounded-[11px] bg-[#fafafa] p-2.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.25)]">
           <h2 className="text-sm font-bold">コメント（{comments.length}）</h2>
+          {commentError && (
+            <p className="text-xs text-[#ef5b5b]" role="alert">
+              {commentError}
+            </p>
+          )}
           {comments.length > 0 && (
             <ul className="flex flex-col divide-y divide-black">
               {comments.map((c) => (
