@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { calendar } from "../../lib/calendar";
 import { parse_date } from "@/lib/parse_date";
-import { MyError } from "@/lib/myerror";
+import { ApiError, type ErrorDetail } from "../lib/errors.js";
 import z from "zod";
 import { requireAuth } from "../middleware/auth";
 
@@ -56,14 +56,12 @@ const ValidateCustomData = z.object({
 
 type EventInput = z.infer<typeof ValidatePost>;
 
-function invalidParams(details: { field: string; message: string }[]): never {
-  throw new MyError(
-    {
-      code: "INVALID_PARAMS",
-      message: "入力内容に誤りがあります",
-      details,
-    },
+function invalidParams(details: ErrorDetail[]): never {
+  throw new ApiError(
     400,
+    "INVALID_PARAMS",
+    "入力内容に誤りがあります",
+    details,
   );
 }
 
@@ -86,13 +84,11 @@ function parseJsonProperty<T>(value: string | undefined, field: string): T {
 }
 
 function eventNotFound(): never {
-  throw new MyError(
-    {
-      code: "INVALID_PARAMS",
-      message: "入力内容に誤りがあります",
-      details: [{ field: "id", message: "eventが存在しません" }],
-    },
+  throw new ApiError(
     404,
+    "NOT_FOUND",
+    "eventが存在しません",
+    [{ field: "id", message: "eventが存在しません" }],
   );
 }
 
@@ -151,16 +147,14 @@ export const calendars = new Hono()
 
 .get("/", async (c) => {
   const q = c.req.query("yearMonth");
-  if (!q) throw new MyError(
-    {
-    code: "INVALID_PARAMS",
-    message: "入力内容に誤りがあります",
-    details: [
-      { field: "yearMonth", message: "日付は必須です" }
-    ]
-    },
-    400
-  );
+  if (!q) {
+    throw new ApiError(
+      400,
+      "INVALID_PARAMS",
+      "入力内容に誤りがあります",
+      [{ field: "yearMonth", message: "日付は必須です" }],
+    );
+  }
 
   const start = parse_date(q);
   const end = parse_date(q);

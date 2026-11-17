@@ -3,8 +3,7 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { auth, webOrigins } from "../lib/auth.js"
 import { apiHandler } from './routes/index.js'
-import { MyError } from '../lib/myerror.js'
-import { ApiError, handleError } from './lib/errors.js'
+import { handleError } from './lib/errors.js'
 
 const app = new Hono()
 
@@ -18,22 +17,13 @@ const app = new Hono()
 .get('/', (c) => {
   return c.text('Hello Hono!')
 })
-// 自前のルート（/api/v1/auth/me など）。better-auth より先に登録する
-.route('/api/v1', apiHandler)
+// 自前のルート（/api/auth/me など）。better-auth より先に登録する
+.route('/api', apiHandler)
 // ログイン・ログアウトなど better-auth の処理
-.on(['GET', 'POST'], '/api/v1/auth/*', (c) => auth.handler(c.req.raw))
+.on(['GET', 'POST'], '/api/auth/*', (c) => auth.handler(c.req.raw))
 
 .onError((err, c) => {
-  if (err instanceof ApiError) {
-    return handleError(err, c)
-  }
-  if (err instanceof MyError) {
-    return c.json(err.response())
-  }
-  return c.json({
-    code: "INTERNAL_ERROR",
-    message: "予期せぬエラーが発生しました"
-  }, 500)
+  return handleError(err, c)
 })
 
 export default app;

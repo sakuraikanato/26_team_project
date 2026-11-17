@@ -12,7 +12,7 @@ const buttonClass =
 
 export default function LoginPage() {
   const router = useRouter();
-  // better-auth の POST /api/v1/auth/sign-in/email に email と password を送る
+  // better-auth の POST /api/auth/sign-in/email に email と password を送る
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
