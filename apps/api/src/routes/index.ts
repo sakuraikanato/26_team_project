@@ -7,5 +7,5 @@ import { postRoutes } from "./posts.js";
 export const apiHandler = new Hono()
   .route("/events", calendars)
   .route("/auth", authRoutes)
-  .route("/weather", weatherRoutes);
+  .route("/weather", weatherRoutes)
   .route("/posts", postRoutes);
