@@ -54,9 +54,9 @@ export default async function Home() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/wordmark.svg"
-                alt="ファーマニマル"
+                alt="フォーマニマル"
                 width={216.16}
-                height={23.84}
+                height={23.936}
               />
             </h1>
             <p className="text-xs font-bold tracking-[0.48px] text-[#59ae69]">
