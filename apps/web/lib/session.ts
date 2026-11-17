@@ -4,9 +4,9 @@ import { useEffect, useSyncExternalStore } from "react";
 import { api } from "./api";
 import { authClient } from "./auth-client";
 
-// GET /api/v1/auth/me の返り値（ログイン中のユーザーとセッション）
+// GET /api/auth/me の返り値（ログイン中のユーザーとセッション）
 type MeResponse = Awaited<
-  ReturnType<Awaited<ReturnType<typeof api.api.v1.auth.me.$get>>["json"]>
+  ReturnType<Awaited<ReturnType<typeof api.api.auth.me.$get>>["json"]>
 >;
 export type Me = Extract<MeResponse, { user: unknown }>;
 
@@ -23,7 +23,7 @@ function emit() {
 export function refreshMe(): Promise<void> {
   loading ??= (async () => {
     try {
-      const res = await api.api.v1.auth.me.$get();
+      const res = await api.api.auth.me.$get();
       me = res.ok ? ((await res.json()) as Me) : null;
     } catch {
       me = null;

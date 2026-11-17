@@ -10,8 +10,8 @@ export const webOrigins = (process.env.WEB_ORIGIN ?? "http://localhost:3000")
 
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:8000",
-  // API 設計書のベース URL（/api/v1）にそろえる
-  basePath: "/api/v1/auth",
+  // API 設計書のベース URL（/api）にそろえる
+  basePath: "/api/auth",
   database: drizzleAdapter(db, {
       provider: "sqlite", // or "mysql", "sqlite"
   }),
