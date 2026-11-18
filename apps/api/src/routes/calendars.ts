@@ -163,7 +163,10 @@ export const calendars = new Hono()
     calendarId: process.env.CALENDAR_ID,
     timeMin: start.toISOString(),
     timeMax: end.toISOString(),
-    maxResults: 20
+    // 1か月分を全部、開始時刻の順で返す（orderBy: startTime には singleEvents が必要）
+    maxResults: 250,
+    singleEvents: true,
+    orderBy: "startTime",
   })
   const events = result.data.items;
   if (!events) return c.json({ events: [] }, 200);
