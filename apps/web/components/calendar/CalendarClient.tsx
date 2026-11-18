@@ -15,6 +15,7 @@ type Props = {
   initialEvents: CalendarEvent[];
   initialForecasts: WeatherForecast[];
   initialYearMonth: string;
+  initialDate: string; // 最初に選んでおく日（今日）
 };
 
 const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
@@ -109,6 +110,7 @@ export default function CalendarClient({
   initialEvents,
   initialForecasts,
   initialYearMonth,
+  initialDate,
 }: Props) {
   const keeper = useIsKeeper();
 
@@ -116,7 +118,7 @@ export default function CalendarClient({
     const [year, month] = initialYearMonth.split("-").map(Number);
     return new Date(year, month - 1, 1);
   });
-  const [selectedDate, setSelectedDate] = useState(`${initialYearMonth}-01`);
+  const [selectedDate, setSelectedDate] = useState(initialDate);
   const [events, setEvents] = useState(initialEvents);
   const [forecasts, setForecasts] = useState(initialForecasts);
   const [showForm, setShowForm] = useState(false);
@@ -126,7 +128,7 @@ export default function CalendarClient({
   const [location, setLocation] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
-  const [eventDate, setEventDate] = useState(`${initialYearMonth}-01`);
+  const [eventDate, setEventDate] = useState(initialDate);
   const [startTime, setStartTime] = useState("11:00");
   const [endTime, setEndTime] = useState("12:00");
   const [formError, setFormError] = useState("");

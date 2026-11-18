@@ -70,6 +70,15 @@ export default function AlbumView({
 
       {/* ヘッダー＋タブ。画面に固定して動かないようにする（高さ87px。上の pt-[87px] と合わせる） */}
       <header className="fixed left-1/2 top-0 z-20 h-[87px] w-full max-w-full -translate-x-1/2 border-b border-[#ccc] bg-[#59ae69] px-4 pb-2 pt-10">
+        {/* トップへ戻る（タブの上の空いている所に小さく置く） */}
+        <Link
+          href="/"
+          className="absolute left-3 top-2 flex items-center gap-0.5 rounded-full py-1 pl-1 pr-2 text-[11px] font-bold text-[#fafafa]"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/icons/back.svg" alt="" width={14} height={14} />
+          トップ
+        </Link>
         <div className="flex overflow-hidden rounded-lg border border-[#5f5f5f] bg-[#488b55]">
           {TABS.map((t) => (
             <button

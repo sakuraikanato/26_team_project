@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import KeeperReset from "@/components/KeeperReset";
 import MoodBackground, { moodForWeather } from "@/components/MoodBackground";
 import { getCurrentWeather } from "@/lib/album";
@@ -37,13 +38,19 @@ function PhotoRow({
   );
 }
 
-export default async function Home() {
-  // 今日の天気で背景を変える（晴れ → キリッ、それ以外 → まったり）
+// 今日の天気で背景を変える（晴れ → キリッ、それ以外 → まったり）
+async function WeatherBackground() {
   const weather = await getCurrentWeather();
+  return <MoodBackground mood={moodForWeather(weather)} />;
+}
 
+export default function Home() {
   return (
     <main className="min-h-screen">
-      <MoodBackground mood={moodForWeather(weather)} />
+      {/* 天気を取るあいだも、ほかの部分は先に表示する */}
+      <Suspense fallback={null}>
+        <WeatherBackground />
+      </Suspense>
       <KeeperReset />
       <div className="relative mx-auto flex min-h-screen w-full max-w-full flex-col gap-[39px] px-5 pb-5 pt-[170px]">
         {/* 写真とタイトル */}
