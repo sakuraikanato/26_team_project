@@ -97,7 +97,9 @@ function toUiWeather(
       : never
     : never,
 ): Weather {
-  if (icon === "sunny") return "sunny";
+  // API では「快晴」だけが sunny で、「晴れ」「一部曇り」は partly-cloudy になる。
+  // どちらも晴れとして扱う（カレンダーの太陽アイコンとそろえる）
+  if (icon === "sunny" || icon === "partly-cloudy") return "sunny";
   if (icon === "rain" || icon === "thunder") return "rainy";
   if (icon === "snow") return "snowy";
   return "cloudy";
