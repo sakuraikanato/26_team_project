@@ -6,14 +6,7 @@ import MoodBackground from "@/components/MoodBackground";
 import { useGuestName } from "@/lib/guest";
 import { useIsKeeper } from "@/lib/keeper";
 import { createComment, getComments, likePost } from "@/lib/api-client";
-import type { Photo, Weather } from "@/lib/album";
-
-const WEATHER: Record<Weather, { icon: string; label: string }> = {
-sunny: { icon: "☀️", label: "晴れ" },
-rainy: { icon: "🌧", label: "雨" },
-cloudy: { icon: "☁️", label: "曇り" },
-snowy: { icon: "❄️", label: "雪" },
-};
+import type { Photo } from "@/lib/album";
 
 const MOOD_LABEL = { kiri: "キリッ", mattari: "まったり" } as const;
 
@@ -38,7 +31,6 @@ const [text, setText] = useState("");
 const [commentError, setCommentError] = useState("");
 const [liking, setLiking] = useState(false);
 
-const weather = photo.weather ? WEATHER[photo.weather] : undefined;
 
   useEffect(() => {
     getComments(photo.id)
@@ -148,23 +140,9 @@ return (
             <p className="text-xs text-black">{photo.description}</p>
           </div>
 
-          {/* 撮影日・天気・気温・投稿者 */}
-          <p className="flex items-center gap-1.5 text-xs text-[#808080]">
-            {weather &&
-              (photo.weather === "sunny" ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src="/icons/weather-sunny.svg" alt="" width={16} height={16} />
-              ) : (
-                <span aria-hidden>{weather.icon}</span>
-              ))}
-            <span>
-              {formatDate(photo.shotDate)}
-              {weather &&
-                `・${weather.label}${
-                  photo.temperature != null ? ` ${photo.temperature}℃` : ""
-                }`}
-              ・投稿：{photo.poster}
-            </span>
+          {/* 撮影日・投稿者（天気は表示しない。データには残っている） */}
+          <p className="text-xs text-[#808080]">
+            {formatDate(photo.shotDate)}・投稿：{photo.poster}
           </p>
         </section>
 
