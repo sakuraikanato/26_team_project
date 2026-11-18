@@ -31,9 +31,8 @@ photo: Photo;
 export default function PhotoDetail({ photo, canEdit }: Props) {
 const keeperUser = useIsKeeper();
   const guestName = useGuestName();
-  // POST /posts/:id/like は「いいね数を増やすだけ」なので、取り消しはできない
-  const [liked, setLiked] = useState(photo.isLiked ?? false);
 const [likeCount, setLikeCount] = useState(photo.likes);
+const [hasLiked, setHasLiked] = useState(false);
 const [comments, setComments] = useState(photo.comments);
 const [text, setText] = useState("");
 const [commentError, setCommentError] = useState("");
@@ -79,12 +78,12 @@ async function submit(e: FormEvent) {
 }
 
 async function submitLike() {
-  if (liked || liking) return;
+  if (liking) return;
   setLiking(true);
   try {
     const result = await likePost(photo.id);
     setLikeCount(result.likeCount);
-    setLiked(true);
+    setHasLiked(true);
   } catch (error) {
     setCommentError(
       error instanceof Error ? error.message : "いいねに失敗しました",
@@ -133,14 +132,12 @@ return (
               <button
                 type="button"
                 onClick={() => void submitLike()}
-                disabled={liked || liking}
-                aria-pressed={liked}
+                disabled={liking}
                 className="flex shrink-0 items-center gap-1.5 rounded-[18px] border border-[#ccc] px-3.5 py-2 text-[13px] font-bold"
               >
-                {/* いいね済みは塗りつぶし、まだなら線だけのハート */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={liked ? "/icons/heart-filled-18.svg" : "/icons/heart-outline.svg"}
+                  src={hasLiked ? "/icons/heart-filled-18.svg" : "/icons/heart-outline.svg"}
                   alt=""
                   width={18}
                   height={18}
