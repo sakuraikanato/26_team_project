@@ -9,11 +9,14 @@ import { getCalendarInitialData } from "@/lib/calendar";
 async function Calendar() {
   // 「今月」はアクセスした日で決まるので、アクセスのたびに作る
   await connection();
-  const yearMonth = new Intl.DateTimeFormat("sv-SE", {
+  // 今日の日付（日本時間、YYYY-MM-DD）と今月（YYYY-MM）
+  const today = new Intl.DateTimeFormat("sv-SE", {
     timeZone: "Asia/Tokyo",
     year: "numeric",
     month: "2-digit",
-  }).format(new Date()).slice(0, 7);
+    day: "2-digit",
+  }).format(new Date());
+  const yearMonth = today.slice(0, 7);
   const { events, forecasts } =
     await getCalendarInitialData(yearMonth);
   // 今日の天気で背景を変える（晴れ → キリッ、それ以外 → まったり）
@@ -26,6 +29,7 @@ async function Calendar() {
         initialEvents={events}
         initialForecasts={forecasts}
         initialYearMonth={yearMonth}
+        initialDate={today}
       />
     </>
   );
